@@ -1,0 +1,10 @@
+# Top-level strings will always be set, though they might be overrriden.
+A = "a"
+
+[local]
+FOO = "a"
+
+[local.yes]
+FOO  = "b"
+BAR  = "bar"
+"AB" = "hello"

@@ -1,0 +1,24 @@
+[package]
+name        = "envswitch"
+version     = "0.1.0"
+edition     = "2024"
+license     = "MIT OR Apache-2.0"
+description = "A simple tool for managing sets of environment variables"
+repository  = "https://github.com/paholg/envswitch"
+homepage    = "https://github.com/paholg/envswitch"
+keywords    = ["shell", "cli"]
+categories  = ["command-line-utilities", "config"]
+
+[dependencies]
+ahash      = { version = "0.8.12", features = ["serde"] }
+clap       = { version = "4.5.45", features = ["derive"] }
+color-eyre = "0.6.5"
+eyre       = "0.6.12"
+itertools  = "0.14.0"
+serde      = { version = "1.0.219", features = ["derive"] }
+toml       = { version = "0.9.5", features = ["serde"] }
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto      = "thin"
