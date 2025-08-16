@@ -1,8 +1,8 @@
-use std::{env, fs, path::PathBuf};
+use std::{env, fs, ops::Deref, path::PathBuf};
 
-use ahash::AHashMap;
-use clap::{Parser, Subcommand};
+use clap::Parser;
 use eyre::eyre;
+use indexmap::IndexMap;
 use itertools::Itertools;
 
 use crate::{
@@ -61,42 +61,37 @@ impl CurrentEnv {
     }
 }
 
+const ABOUT: &str = "A simple tool for managing sets of environment variables
+
+Run with no arguments to see the current environment setting.";
+
 #[derive(Parser, Debug)]
-#[command(version, about, long_about)]
+#[command(version, about = ABOUT)]
 struct Args {
+    #[arg(default_value = "")]
+    env: String,
+
     #[arg(short, long)]
     shell: Shell,
 
-    #[command(subcommand)]
-    action: Action,
-}
-
-#[derive(Clone, Debug, Subcommand)]
-enum Action {
-    Get,
-    Set {
-        env: String,
-
-        #[arg(short, long, default_value = "./envswitch.toml")]
-        file: PathBuf,
-    },
+    #[arg(short, long, default_value = "./envswitch.toml")]
+    file: PathBuf,
 }
 
 fn main() -> eyre::Result<()> {
     color_eyre::install()?;
 
-    let args = Args::parse();
-
     let current_env = CurrentEnv::new()?;
-    let (env, file) = match args.action {
-        Action::Get => {
-            println!("{}", current_env.name());
-            return Ok(());
-        }
-        Action::Set { env, file } => (env, file),
-    };
 
-    let shell = args.shell;
+    // I can find no good way with clap to support either a set of args or no
+    // args without hiding them behind subcommands, so we just skip clap when
+    // there are no args.
+    if env::args().len() == 1 {
+        println!("{}", current_env.name());
+        return Ok(());
+    }
+
+    let Args { env, shell, file } = Args::parse();
 
     let file = fs::read(&file)?;
     let config: Table = toml::from_slice(&file)?;
@@ -117,12 +112,15 @@ fn main() -> eyre::Result<()> {
         println!("{command}");
     }
 
+    let variables = walker.variables();
+    eprintln!("Environment set: {env}: {variables}");
+
     Ok(())
 }
 
 #[derive(Debug, Default)]
 struct Walker<'a> {
-    vals: AHashMap<&'a str, &'a str>,
+    vals: IndexMap<&'a str, &'a str>,
 }
 
 impl<'a> Walker<'a> {
@@ -136,6 +134,10 @@ impl<'a> Walker<'a> {
         self.vals
             .iter()
             .map(|(var, value)| shell.set_var(var, value))
+    }
+
+    fn variables(&self) -> String {
+        Itertools::intersperse(self.vals.keys().map(Deref::deref), " ").collect()
     }
 
     fn walk(
@@ -155,6 +157,9 @@ impl<'a> Walker<'a> {
         let Some(head) = keys.next() else {
             return Ok(());
         };
+        if head.is_empty() {
+            return Ok(());
+        }
         let inner = config
             .get(head)
             .ok_or_else(|| eyre!("missing key '{head}'"))?
