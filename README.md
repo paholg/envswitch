@@ -2,6 +2,28 @@
 
 A simple tool to manage multiple sets of environment variables.
 
+Quick example:
+
+Given:
+
+```toml
+[local]
+URL = "http://localhost:3000"
+KEY = "test_key_123"
+
+[prod]
+URL = "https://example.com"
+
+[prod.abc]
+KEY = "super_secret"
+```
+
+The calling `es local` will set `URL=http://localhost:3000` and
+`KEY=test_key_123`, whereas `es prod.abc` will set `URL=https://example.com` and
+`KEY=super_secret`.
+
+See [Usage](#Usage) for more detailed examples.
+
 ## Compatibility
 
 Currently, envswitch is compatible with bash, zsh, and fish shells.
@@ -27,7 +49,8 @@ otherwise it just outputs shell commands that need to be sourced.
 
 The following functions will look for the file `envswitch.toml` in the directory
 that you call them from. If you'd prefer alterntive behavior, such as a set
-location, pass in the `--file` flag.
+location, pass in the `--file` flag. You can see all options with
+`envswitch --help`.
 
 Please place the appropriate line in your shell config:
 
