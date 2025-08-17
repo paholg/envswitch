@@ -1,6 +1,6 @@
 use std::{fmt, ops::Deref};
 
-use ahash::AHashMap;
+use indexmap::IndexMap;
 use serde::{
     Deserialize,
     de::{self, Visitor},
@@ -29,18 +29,19 @@ impl AsRef<str> for Key {
     }
 }
 
+const FORBIDDEN_CHARS: &[char] = &['.', ',', ':', ' '];
+
 impl TryFrom<String> for Key {
     type Error = eyre::Error;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        if value.contains(".") {
-            Err(eyre::Error::msg("Config keys cannot contain '.'"))
-        } else if value.contains(":") {
-            Err(eyre::Error::msg("Config keys cannot contain ':'"))
-        } else if value.contains(",") {
-            Err(eyre::Error::msg("Config keys cannot contain ','"))
-        } else {
-            Ok(Key(value))
+        match FORBIDDEN_CHARS
+            .iter()
+            .filter_map(|&ch| value.contains(ch).then_some(ch))
+            .next()
+        {
+            Some(invalid_char) => Err(eyre::eyre!("Config keys cannot contain '{invalid_char}'")),
+            None => Ok(Key(value)),
         }
     }
 }
@@ -55,7 +56,7 @@ impl<'de> Deserialize<'de> for Key {
     }
 }
 
-pub type Table = AHashMap<Key, Value>;
+pub type Table = IndexMap<Key, Value>;
 
 #[derive(Debug)]
 pub enum Value {

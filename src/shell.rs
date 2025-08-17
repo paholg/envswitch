@@ -1,5 +1,7 @@
 use clap::ValueEnum;
 
+// NOTE: If you add any shells here, make sure to add instructions to the
+// readme.
 #[derive(Copy, Clone, Debug, ValueEnum)]
 pub enum Shell {
     Bash,

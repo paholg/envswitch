@@ -1,0 +1,18 @@
+GLOBAL = "some global variable"
+
+[staging]
+URL = "staging.com"
+
+[staging.abc]
+KEY = "secret_ABC"
+
+[staging.def]
+KEY = "secret_DEF"
+URL = "def.staging.com"
+
+[prod]
+GLOBAL = "override for production"
+URL    = "prod.com"
+
+[prod.abc]
+KEY = "prod_secret_ABC"
