@@ -56,6 +56,7 @@
           inherit buildInputs nativeBuildInputs;
           packages = [
             pkgs.cargo-dist
+            pkgs.cargo-edit
             pkgs.just
             rust
           ];
