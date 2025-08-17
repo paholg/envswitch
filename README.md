@@ -18,9 +18,9 @@ URL = "https://example.com"
 KEY = "super_secret"
 ```
 
-The calling `es local` will set `URL=http://localhost:3000` and
-`KEY=test_key_123`, whereas `es prod.abc` will set `URL=https://example.com` and
-`KEY=super_secret`.
+Then running `es local` will set `URL=http://localhost:3000` and
+`KEY=test_key_123`, whereas running `es prod.abc` will set
+`URL=https://example.com` and `KEY=super_secret`.
 
 See [Usage](#Usage) for more detailed examples.
 
@@ -135,8 +135,6 @@ GLOBAL="some global variable"
 # NOTE: Running with no arguments will cause any non-global variables that were
 # set by envswitch to be unset.
 ```
-
-**`envswitch`**
 
 ## Integrations
 
