@@ -36,7 +36,10 @@ See [Usage](#Usage) for more detailed examples.
 
 ## Compatibility
 
-Currently, envswitch is compatible with bash, zsh, and fish shells.
+Currently, envswitch is compatible with these shells:
+* bash
+* fish
+* zsh
 
 If you'd like to use envswitch with another shell, it should be quite easy to
 add; please open a ticket or a PR. See [src/shell.rs](src/shell.rs).
@@ -77,6 +80,7 @@ es() { source <(envswitch set -szsh "$@"); }
 ```
 
 ---
+
 The prior functions will look for the file `envswitch.toml` in the directoy you
 call them in. If you'd prefer a different file, or perhaps to set an alias with
 a fixed file location, you can do so with the `--file/-f` flag.
@@ -84,7 +88,7 @@ a fixed file location, you can do so with the `--file/-f` flag.
 For example, you might want to set an alias like this:
 
 ```bash
-alias esh=es -f ~/.envswitch.toml
+alias esh="es -f ~/.envswitch.toml"
 ```
 
 You can see all options with `envswitch --help`.
