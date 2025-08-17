@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use clap::{Args, Parser, Subcommand};
+use clap::{Args, Parser, Subcommand, ValueHint};
 use eyre::{Context, eyre};
 
 use crate::{config::Table, shell::Shell};
@@ -29,24 +29,42 @@ pub enum Commands {
     List(List),
     /// Set the environment
     Set(Set),
+    /// Generate shell completions
+    Completions(Completions),
 }
 
 #[derive(Debug, Clone, Args)]
 pub struct List {
-    #[arg(short, long, help = "hello")]
-    pub file: Option<PathBuf>,
+    #[command(flatten)]
+    pub config: ConfigPath,
 }
 
 #[derive(Debug, Clone, Args)]
 pub struct Set {
-    #[arg(short, long)]
-    pub file: Option<PathBuf>,
+    #[command(flatten)]
+    pub config: ConfigPath,
     /// The name of the environment to select; leave blank to only set global
     /// options.
-    #[arg(default_value = "")]
+    #[arg(default_value = "", value_hint = ValueHint::Other)]
     pub env: String,
 
     #[arg(short, long)]
+    pub shell: Shell,
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct ConfigPath {
+    #[arg(short, long, value_hint = ValueHint::FilePath, help = "path to config file [defaults: ./envswitch.toml]")]
+    pub file: Option<PathBuf>,
+}
+
+// TODO: Try to get nice completions working for `env`.
+// fn env_completer(current: &std::ffi::OsStr) -> Vec<CompletionCandidate> {
+//     todo!("current: {current:?}")
+// }
+
+#[derive(Debug, Clone, Args)]
+pub struct Completions {
     pub shell: Shell,
 }
 

@@ -1,7 +1,9 @@
-use clap::Parser;
+use std::io;
+
+use clap::{CommandFactory, Parser};
 
 use crate::{
-    cli::{Cli, Commands, List, Set},
+    cli::{Cli, Commands, Completions, List, Set},
     config::{Key, deep_keys},
     config_walker::ConfigWalker,
     current_env::CurrentEnv,
@@ -14,7 +16,7 @@ mod current_env;
 mod shell;
 
 fn list(args: List) -> eyre::Result<()> {
-    let config = cli::load_config_file(args.file.as_deref())?;
+    let config = cli::load_config_file(args.config.file.as_deref())?;
     eprintln!("Available environments:");
     for env in deep_keys(&config) {
         eprintln!("\t{env}");
@@ -28,8 +30,8 @@ fn get() -> eyre::Result<()> {
 }
 
 fn set(args: Set) -> eyre::Result<()> {
-    let Set { file, env, shell } = args;
-    let config = cli::load_config_file(file.as_deref())?;
+    let Set { config, env, shell } = args;
+    let config = cli::load_config_file(config.file.as_deref())?;
 
     let current_env = CurrentEnv::new()?;
 
@@ -60,13 +62,27 @@ fn set(args: Set) -> eyre::Result<()> {
     Ok(())
 }
 
+fn completions(args: Completions) -> eyre::Result<()> {
+    let mut cmd = Cli::command();
+    let name = cmd.get_name().to_string();
+    clap_complete::generate(
+        args.shell.as_clap_complete(),
+        &mut cmd,
+        name,
+        &mut io::stdout(),
+    );
+    Ok(())
+}
+
 fn main() -> eyre::Result<()> {
     color_eyre::install()?;
+
     let cli = Cli::parse();
 
     match cli.command {
         Commands::Get => get(),
         Commands::List(args) => list(args),
         Commands::Set(args) => set(args),
+        Commands::Completions(args) => completions(args),
     }
 }

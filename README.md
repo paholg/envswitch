@@ -57,7 +57,7 @@ various platforms is easy.
 It is strongly recommended that you run `envswitch` through a shell function, as
 otherwise it just outputs shell commands that need to be sourced.
 
-Please place the appropriate line in your shell config:
+Please place the appropriate snippet in your shell config:
 
 ### Bash
 
@@ -160,6 +160,9 @@ GLOBAL="some global variable"
 # NOTE: Running with no arguments will cause any non-global variables that were
 # set by envswitch to be unset.
 ```
+
+You can also run `envswitch list` to see available environments or
+`envswitch get` to see the currently set environment.
 
 ## Integrations
 
