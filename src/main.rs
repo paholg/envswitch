@@ -6,7 +6,7 @@ use indexmap::IndexMap;
 use itertools::Itertools;
 
 use crate::{
-    config::{Key, Table},
+    config::{Key, Table, deep_keys},
     shell::Shell,
 };
 
@@ -74,8 +74,14 @@ Run with no arguments to see the current environment setting.";
 #[derive(Parser, Debug)]
 #[command(version, about = ABOUT)]
 struct Args {
+    /// The name of the environment to select; leave blank to only set global
+    /// options.
     #[arg(default_value = "")]
     env: String,
+
+    /// List currently available environments and exit.
+    #[arg(short, long)]
+    list: bool,
 
     #[arg(short, long)]
     shell: Shell,
@@ -96,16 +102,31 @@ fn main() -> eyre::Result<()> {
     color_eyre::install()?;
     let current_env = CurrentEnv::new()?;
 
-    let Args { env, shell, file } = Args::parse();
+    let Args {
+        env,
+        shell,
+        file,
+        list,
+    } = Args::parse();
 
     let file = match fs::read(&file) {
         Ok(bytes) => bytes,
         Err(_) => {
-            eprintln!("No file found; clearing environment");
+            if !list {
+                eprintln!("No file found; clearing environment");
+            }
             Vec::new()
         }
     };
     let config: Table = toml::from_slice(&file)?;
+
+    if list {
+        eprintln!("Available environments:");
+        for env in deep_keys(&config) {
+            eprintln!("\t{env}");
+        }
+        return Ok(());
+    }
 
     let keys = env
         .split('.')

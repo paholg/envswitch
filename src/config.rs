@@ -64,6 +64,29 @@ pub enum Value {
     Table(Table),
 }
 
+pub fn deep_keys(table: &Table) -> impl Iterator<Item = String> {
+    fn collect_keys(table: &Table, prefix: &str, keys: &mut Vec<String>) {
+        for (key, value) in table {
+            let Some(table) = value.as_table() else {
+                continue;
+            };
+            let full_key = if prefix.is_empty() {
+                key.0.clone()
+            } else {
+                format!("{}.{}", prefix, key)
+            };
+
+            keys.push(full_key.clone());
+
+            collect_keys(table, &full_key, keys);
+        }
+    }
+
+    let mut keys = Vec::new();
+    collect_keys(table, "", &mut keys);
+    keys.into_iter()
+}
+
 impl<'de> Deserialize<'de> for Value {
     // We implement this ourselves instead of using `#[serde(untagged)]` to get
     // better error messages.
