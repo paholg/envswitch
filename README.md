@@ -56,12 +56,12 @@ Please place the appropriate line in your shell config:
 
 ### Bash and Zsh
 ```bash
-es() { source <(envswitch -sbash "$@"); }
+es() { source <(envswitch set -sbash "$@"); }
 ```
 
 ### Fish
 ```fish
-function es; envswitch -sfish $argv | source; end
+function es; envswitch set -sfish $argv | source; end
 ```
 
 ## Usage
@@ -138,8 +138,8 @@ GLOBAL="some global variable"
 
 ## Integrations
 
-Running just `envswitch` (and not one of our shell functions) will
-print the name of the environment we are currently in, such as `staging.def`.
+Running `envswitch get` will print the name of the environment we are currently
+in, such as `staging.def`.
 
 This can be used to show the current environment in your prompt.
 
@@ -152,7 +152,7 @@ Here is an example that can be added to `starship.toml`:
 ```toml
 [custom.envswitch]
 description = "Show which envswitch environment is currently active."
-command = "envswitch"
+command = "envswitch get"
 style = "yellow"
 when = true
 format = "[($symbol $output )]($style)"

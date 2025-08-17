@@ -1,6 +1,10 @@
-use std::{env, fs, ops::Deref, path::PathBuf};
+use std::{
+    env, fs,
+    ops::Deref,
+    path::{Path, PathBuf},
+};
 
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use eyre::eyre;
 use indexmap::IndexMap;
 use itertools::Itertools;
@@ -73,60 +77,63 @@ Run with no arguments to see the current environment setting.";
 
 #[derive(Parser, Debug)]
 #[command(version, about = ABOUT)]
-struct Args {
-    /// The name of the environment to select; leave blank to only set global
-    /// options.
-    #[arg(default_value = "")]
-    env: String,
-
-    /// List currently available environments and exit.
-    #[arg(short, long)]
-    list: bool,
-
-    #[arg(short, long)]
-    shell: Shell,
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
 
     #[arg(short, long, default_value = "./envswitch.toml")]
     file: PathBuf,
 }
 
-fn main() -> eyre::Result<()> {
-    // I can find no good way with clap to support either a set of args or no
-    // args without hiding them behind subcommands, so we just skip clap when
-    // there are no args.
-    if env::args().len() == 1 {
-        println!("{}", CurrentEnv::name());
-        return Ok(());
-    }
+#[derive(Debug, Subcommand)]
+enum Commands {
+    /// Show the name of the current environment
+    Get,
+    /// List available environments
+    List,
+    /// Set the environment
+    Set {
+        /// The name of the environment to select; leave blank to only set global
+        /// options.
+        #[arg(default_value = "")]
+        env: String,
 
-    color_eyre::install()?;
-    let current_env = CurrentEnv::new()?;
+        #[arg(short, long)]
+        shell: Shell,
+    },
+}
 
-    let Args {
-        env,
-        shell,
-        file,
-        list,
-    } = Args::parse();
-
-    let file = match fs::read(&file) {
+fn load_file(path: &Path) -> eyre::Result<Table> {
+    let file = match fs::read(path) {
         Ok(bytes) => bytes,
-        Err(_) => {
-            if !list {
-                eprintln!("No file found; clearing environment");
-            }
-            Vec::new()
-        }
+        Err(_) => Vec::new(),
     };
     let config: Table = toml::from_slice(&file)?;
 
-    if list {
-        eprintln!("Available environments:");
-        for env in deep_keys(&config) {
-            eprintln!("\t{env}");
+    Ok(config)
+}
+
+fn main() -> eyre::Result<()> {
+    color_eyre::install()?;
+    let cli = Cli::parse();
+    let (env, shell) = match cli.command {
+        Commands::Get => {
+            println!("{}", CurrentEnv::name());
+            return Ok(());
         }
-        return Ok(());
-    }
+        Commands::List => {
+            let config = load_file(&cli.file)?;
+            eprintln!("Available environments:");
+            for env in deep_keys(&config) {
+                eprintln!("\t{env}");
+            }
+            return Ok(());
+        }
+        Commands::Set { env, shell } => (env, shell),
+    };
+    let config = load_file(&cli.file)?;
+
+    let current_env = CurrentEnv::new()?;
 
     let keys = env
         .split('.')
