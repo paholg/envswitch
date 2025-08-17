@@ -2,9 +2,9 @@
 
 A simple tool to manage multiple sets of environment variables.
 
-Quick example:
+## Quick example
 
-Given:
+Given this config file:
 
 ```toml
 [local]
@@ -18,9 +18,19 @@ URL = "https://example.com"
 KEY = "super_secret"
 ```
 
-Then running `es local` will set `URL=http://localhost:3000` and
-`KEY=test_key_123`, whereas running `es prod.abc` will set
-`URL=https://example.com` and `KEY=super_secret`.
+Running `es local` will set:
+
+```bash
+URL=http://localhost:3000
+KEY=test_key_123
+```
+
+Running `es prod.abc` will set:
+
+```bash
+URL=https://example.com
+KEY=super_secret
+```
 
 See [Usage](#Usage) for more detailed examples.
 
@@ -47,14 +57,10 @@ various platforms is easy.
 It is strongly recommended that you run `envswitch` through a shell function, as
 otherwise it just outputs shell commands that need to be sourced.
 
-The following functions will look for the file `envswitch.toml` in the directory
-that you call them from. If you'd prefer alterntive behavior, such as a set
-location, pass in the `--file` flag. You can see all options with
-`envswitch --help`.
-
 Please place the appropriate line in your shell config:
 
-### Bash and Zsh
+### Bash
+
 ```bash
 es() { source <(envswitch set -sbash "$@"); }
 ```
@@ -63,6 +69,25 @@ es() { source <(envswitch set -sbash "$@"); }
 ```fish
 function es; envswitch set -sfish $argv | source; end
 ```
+
+### Zsh
+
+```zsh
+es() { source <(envswitch set -szsh "$@"); }
+```
+
+---
+The prior functions will look for the file `envswitch.toml` in the directoy you
+call them in. If you'd prefer a different file, or perhaps to set an alias with
+a fixed file location, you can do so with the `--file/-f` flag.
+
+For example, you might want to set an alias like this:
+
+```bash
+alias esh=es -f ~/.envswitch.toml
+```
+
+You can see all options with `envswitch --help`.
 
 ## Usage
 
@@ -157,4 +182,48 @@ style = "yellow"
 when = true
 format = "[($symbol $output )]($style)"
 symbol = ""
+```
+
+### How it Works
+
+When you run an `envswitch set` command, it outputs commands to set or unset
+variables, which are then sourced by your shell in the function setup in
+[Configuration](#configuration).
+
+It also sets a special variable to let it track what it has set before. This
+enables `envswitch` to unset variables it has previously set even if you edit
+the config file or pass it a different one, such as by moving to another
+directory.
+
+Perhaps this is most clear with some examples. Using the config file from
+[Usage](#usage),
+
+```bash
+$ envswitch set -sbash staging
+export ENVSWITCH_ENV="staging:GLOBAL,URL"
+export GLOBAL="some global variable"
+export URL="staging.com"
+Environment set: staging GLOBAL URL
+```
+
+The 3 export lines are piped to stdout, whereas the last line is sent to stderr
+so that it is not captured by the pipe to `source`.
+
+The `ENVSWITCH_ENV` variable tells us the name of the environment we're in
+(which is used by `envswitch get`) and which variables we have set.
+
+So, when we run another `set` command, it can unset them:
+
+```bash
+$ envswitch get
+staging
+
+$ envswitch set -sbash prod.abc
+unset GLOBAL
+unset URL
+export ENVSWITCH_ENV="prod.abc:GLOBAL,URL,KEY"
+export GLOBAL="override for production"
+export URL="prod.com"
+export KEY="prod_secret_ABC"
+Environment set: prod.abc GLOBAL URL KEY
 ```

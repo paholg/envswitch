@@ -1,7 +1,7 @@
 use clap::Parser;
 
 use crate::{
-    cli::{Cli, Commands},
+    cli::{Cli, Commands, List, Set},
     config::{Key, deep_keys},
     config_walker::ConfigWalker,
     current_env::CurrentEnv,
@@ -13,25 +13,23 @@ mod config_walker;
 mod current_env;
 mod shell;
 
-fn main() -> eyre::Result<()> {
-    color_eyre::install()?;
-    let cli = Cli::parse();
-    let (env, shell) = match cli.command {
-        Commands::Get => {
-            println!("{}", CurrentEnv::name());
-            return Ok(());
-        }
-        Commands::List => {
-            let config = cli::load_config_file(&cli.file)?;
-            eprintln!("Available environments:");
-            for env in deep_keys(&config) {
-                eprintln!("\t{env}");
-            }
-            return Ok(());
-        }
-        Commands::Set { env, shell } => (env, shell),
-    };
-    let config = cli::load_config_file(&cli.file)?;
+fn list(args: List) -> eyre::Result<()> {
+    let config = cli::load_config_file(args.file.as_deref())?;
+    eprintln!("Available environments:");
+    for env in deep_keys(&config) {
+        eprintln!("\t{env}");
+    }
+    Ok(())
+}
+
+fn get() -> eyre::Result<()> {
+    println!("{}", CurrentEnv::name());
+    Ok(())
+}
+
+fn set(args: Set) -> eyre::Result<()> {
+    let Set { file, env, shell } = args;
+    let config = cli::load_config_file(file.as_deref())?;
 
     let current_env = CurrentEnv::new()?;
 
@@ -60,4 +58,15 @@ fn main() -> eyre::Result<()> {
     }
 
     Ok(())
+}
+
+fn main() -> eyre::Result<()> {
+    color_eyre::install()?;
+    let cli = Cli::parse();
+
+    match cli.command {
+        Commands::Get => get(),
+        Commands::List(args) => list(args),
+        Commands::Set(args) => set(args),
+    }
 }
