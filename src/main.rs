@@ -41,7 +41,10 @@ impl CurrentEnv {
     }
 
     fn clear_commands(&self, shell: &Shell) -> impl Iterator<Item = String> {
-        self.vars.iter().map(|var| shell.clear_var(var))
+        self.vars
+            .iter()
+            .filter(|var| !var.is_empty())
+            .map(|var| shell.clear_var(var))
     }
 
     fn name(&self) -> &str {

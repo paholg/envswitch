@@ -22,12 +22,14 @@ various platforms is easy.
 
 ## Configuration
 
-It is strongly recommended that you run `envswitch` through a shell alias, as
+It is strongly recommended that you run `envswitch` through a shell function, as
 otherwise it just outputs shell commands that need to be sourced.
 
-The following aliases will look for the file `envswitch.toml` in the directory
+The following functions will look for the file `envswitch.toml` in the directory
 that you call them from. If you'd prefer alterntive behavior, such as a set
 location, pass in the `--file` flag.
+
+Please place the appropriate line in your shell config:
 
 ### Bash and Zsh
 ```bash
@@ -41,8 +43,8 @@ function es; envswitch -sfish $argv | source; end
 
 ## Usage
 
-The `envswitch.toml` should be thought of as a tree; `envswitch` will walk it
-to your given path, overriding any more general settings.
+The `envswitch.toml` file should be thought of as a tree; `envswitch` will walk
+it to your given path, overriding any more general settings.
 
 Given this example file:
 
