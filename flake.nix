@@ -40,6 +40,8 @@
           inherit buildInputs nativeBuildInputs;
           src = craneLib.cleanCargoSource ./.;
           strictDeps = true;
+
+          meta.mainProgram = "envswitch";
         };
       in
       {
