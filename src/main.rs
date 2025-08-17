@@ -1,6 +1,7 @@
 use std::io;
 
 use clap::{CommandFactory, Parser};
+use color_eyre::config::HookBuilder;
 
 use crate::{
     cli::{Cli, Commands, Completions, List, Set},
@@ -75,7 +76,9 @@ fn completions(args: Completions) -> eyre::Result<()> {
 }
 
 fn main() -> eyre::Result<()> {
-    color_eyre::install()?;
+    HookBuilder::default()
+        .display_env_section(false)
+        .install()?;
 
     let cli = Cli::parse();
 
