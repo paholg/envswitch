@@ -51,9 +51,16 @@ impl<'a> ConfigWalker<'a> {
         if head.is_empty() {
             return Ok(());
         }
+        let missing_key = || {
+            let options = config
+                .iter()
+                .filter_map(|(k, v)| v.as_table().map(|_| k))
+                .join(", ");
+            eyre!("missing key '{head}'. Available options: {options}")
+        };
         let inner = config
             .get(head)
-            .ok_or_else(|| eyre!("missing key '{head}'"))?
+            .ok_or_else(missing_key)?
             .as_table()
             .ok_or_else(|| eyre!("key '{head}' does not correspond to a table"))?;
 
