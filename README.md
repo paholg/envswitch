@@ -16,7 +16,7 @@ various platforms is easy.
 
 | Platform | Instructions |
 |-------|-----------------|
-| MacOs | Run `brew install envswitch` |
+| MacOs | Run `brew install paholg/tap/envswitch` |
 | Nix   | Add this repo as a flake input |
 | Other | See [releases](https://github.com/paholg/envswitch/releases/) |
 
