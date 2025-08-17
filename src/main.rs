@@ -98,7 +98,13 @@ fn main() -> eyre::Result<()> {
 
     let Args { env, shell, file } = Args::parse();
 
-    let file = fs::read(&file)?;
+    let file = match fs::read(&file) {
+        Ok(bytes) => bytes,
+        Err(_) => {
+            eprintln!("No file found; clearing environment");
+            Vec::new()
+        }
+    };
     let config: Table = toml::from_slice(&file)?;
 
     let keys = env
@@ -118,7 +124,12 @@ fn main() -> eyre::Result<()> {
     }
 
     let variables = walker.variables();
-    eprintln!("Environment set: {env}: {variables}");
+
+    if env.is_empty() && variables.is_empty() {
+        eprintln!("Environment cleared");
+    } else {
+        eprintln!("Environment set: {env} {variables}");
+    }
 
     Ok(())
 }
