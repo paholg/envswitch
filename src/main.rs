@@ -1,117 +1,17 @@
-use std::{
-    env, fs,
-    ops::Deref,
-    path::{Path, PathBuf},
-};
-
-use clap::{Parser, Subcommand};
-use eyre::eyre;
-use indexmap::IndexMap;
-use itertools::Itertools;
+use clap::Parser;
 
 use crate::{
-    config::{Key, Table, deep_keys},
-    shell::Shell,
+    cli::{Cli, Commands},
+    config::{Key, deep_keys},
+    config_walker::ConfigWalker,
+    current_env::CurrentEnv,
 };
 
+mod cli;
 mod config;
+mod config_walker;
+mod current_env;
 mod shell;
-
-pub const ENVSWITCH_VAR: &str = "ENVSWITCH_ENV";
-
-pub struct CurrentEnv {
-    vars: Vec<String>,
-}
-
-impl CurrentEnv {
-    fn name() -> String {
-        match env::var(ENVSWITCH_VAR) {
-            Ok(value) => value
-                .split_once(':')
-                .map(|(env, _)| env.to_string())
-                .unwrap_or_default(),
-            Err(_) => String::new(),
-        }
-    }
-
-    fn new() -> eyre::Result<Self> {
-        match env::var(ENVSWITCH_VAR) {
-            Ok(value) => {
-                let Some((_env_name, vars)) = value.split_once(':') else {
-                    return Err(eyre!(
-                        "Invalid {ENVSWITCH_VAR} variable; please inspect and clear it"
-                    ));
-                };
-
-                Ok(Self {
-                    vars: vars.split(',').map(ToString::to_string).collect(),
-                })
-            }
-            Err(_) => Ok(Self { vars: Vec::new() }),
-        }
-    }
-
-    fn clear_commands(&self, shell: &Shell) -> impl Iterator<Item = String> {
-        self.vars
-            .iter()
-            .filter(|var| !var.is_empty())
-            .map(|var| shell.clear_var(var))
-    }
-
-    fn set<'a>(&self, shell: &Shell, env: &'a str, vars: impl Iterator<Item = &'a str>) -> String {
-        let mut value = String::new();
-        value.push_str(env);
-        value.push(':');
-
-        for s in Itertools::intersperse(vars, ",") {
-            value.push_str(s);
-        }
-
-        shell.set_var(ENVSWITCH_VAR, &value)
-    }
-}
-
-const ABOUT: &str = "A simple tool for managing sets of environment variables
-
-Run with no arguments to see the current environment setting.";
-
-#[derive(Parser, Debug)]
-#[command(version, about = ABOUT)]
-struct Cli {
-    #[command(subcommand)]
-    command: Commands,
-
-    #[arg(short, long, default_value = "./envswitch.toml")]
-    file: PathBuf,
-}
-
-#[derive(Debug, Subcommand)]
-enum Commands {
-    /// Show the name of the current environment
-    Get,
-    /// List available environments
-    List,
-    /// Set the environment
-    Set {
-        /// The name of the environment to select; leave blank to only set global
-        /// options.
-        #[arg(default_value = "")]
-        env: String,
-
-        #[arg(short, long)]
-        shell: Shell,
-    },
-}
-
-fn load_file(path: &Path) -> eyre::Result<Table> {
-    let file = match fs::read(path) {
-        Ok(bytes) => bytes,
-        Err(_) => Vec::new(),
-    };
-    let config: Table = toml::from_slice(&file)?;
-
-    Ok(config)
-}
 
 fn main() -> eyre::Result<()> {
     color_eyre::install()?;
@@ -122,7 +22,7 @@ fn main() -> eyre::Result<()> {
             return Ok(());
         }
         Commands::List => {
-            let config = load_file(&cli.file)?;
+            let config = cli::load_config_file(&cli.file)?;
             eprintln!("Available environments:");
             for env in deep_keys(&config) {
                 eprintln!("\t{env}");
@@ -131,7 +31,7 @@ fn main() -> eyre::Result<()> {
         }
         Commands::Set { env, shell } => (env, shell),
     };
-    let config = load_file(&cli.file)?;
+    let config = cli::load_config_file(&cli.file)?;
 
     let current_env = CurrentEnv::new()?;
 
@@ -140,7 +40,7 @@ fn main() -> eyre::Result<()> {
         .map(|k| Key::try_from(k.to_string()))
         .collect::<eyre::Result<Vec<_>>>()?;
 
-    let walker = Walker::new(&config, keys.iter())?;
+    let walker = ConfigWalker::new(&config, keys.iter())?;
 
     let commands = current_env
         .clear_commands(&shell)
@@ -160,58 +60,4 @@ fn main() -> eyre::Result<()> {
     }
 
     Ok(())
-}
-
-#[derive(Debug, Default)]
-struct Walker<'a> {
-    vals: IndexMap<&'a str, &'a str>,
-}
-
-impl<'a> Walker<'a> {
-    fn new(config: &'a Table, keys: impl Iterator<Item = &'a Key>) -> eyre::Result<Self> {
-        let mut this = Self::default();
-        this.walk(config, keys)?;
-        Ok(this)
-    }
-
-    fn set_commands(&self, shell: &Shell) -> impl Iterator<Item = String> {
-        self.vals
-            .iter()
-            .map(|(var, value)| shell.set_var(var, value))
-    }
-
-    fn variables(&self) -> String {
-        Itertools::intersperse(self.vals.keys().map(Deref::deref), " ").collect()
-    }
-
-    fn walk(
-        &mut self,
-        config: &'a Table,
-        mut keys: impl Iterator<Item = &'a Key>,
-    ) -> eyre::Result<()> {
-        // First we track any variables that are set at this level:
-        let variables = config
-            .iter()
-            .flat_map(|(k, v)| v.as_string().map(|v| (k, v)));
-        for (var, value) in variables {
-            self.vals.insert(&var, value);
-        }
-
-        // Now we go to the next level:
-        let Some(head) = keys.next() else {
-            return Ok(());
-        };
-        if head.is_empty() {
-            return Ok(());
-        }
-        let inner = config
-            .get(head)
-            .ok_or_else(|| eyre!("missing key '{head}'"))?
-            .as_table()
-            .ok_or_else(|| eyre!("key '{head}' does not correspond to a table"))?;
-
-        self.walk(inner, keys)?;
-
-        Ok(())
-    }
 }
