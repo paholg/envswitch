@@ -16,27 +16,34 @@ mod shell;
 pub const ENVSWITCH_VAR: &str = "ENVSWITCH_ENV";
 
 pub struct CurrentEnv {
-    env: Option<String>,
     vars: Vec<String>,
 }
 
 impl CurrentEnv {
+    fn name() -> String {
+        match env::var(ENVSWITCH_VAR) {
+            Ok(value) => value
+                .split_once(':')
+                .map(|(env, _)| env.to_string())
+                .unwrap_or_default(),
+            Err(_) => String::new(),
+        }
+    }
+
     fn new() -> eyre::Result<Self> {
         match env::var(ENVSWITCH_VAR) {
             Ok(value) => {
-                let Some((env, vars)) = value.split_once(':') else {
-                    todo!()
+                let Some((_env_name, vars)) = value.split_once(':') else {
+                    return Err(eyre!(
+                        "Invalid {ENVSWITCH_VAR} variable; please inspect and clear it"
+                    ));
                 };
 
                 Ok(Self {
-                    env: Some(env.to_string()),
                     vars: vars.split(',').map(ToString::to_string).collect(),
                 })
             }
-            Err(_) => Ok(Self {
-                env: None,
-                vars: Vec::new(),
-            }),
+            Err(_) => Ok(Self { vars: Vec::new() }),
         }
     }
 
@@ -45,10 +52,6 @@ impl CurrentEnv {
             .iter()
             .filter(|var| !var.is_empty())
             .map(|var| shell.clear_var(var))
-    }
-
-    fn name(&self) -> &str {
-        self.env.as_deref().unwrap_or_default()
     }
 
     fn set<'a>(&self, shell: &Shell, env: &'a str, vars: impl Iterator<Item = &'a str>) -> String {
@@ -82,17 +85,16 @@ struct Args {
 }
 
 fn main() -> eyre::Result<()> {
-    color_eyre::install()?;
-
-    let current_env = CurrentEnv::new()?;
-
     // I can find no good way with clap to support either a set of args or no
     // args without hiding them behind subcommands, so we just skip clap when
     // there are no args.
     if env::args().len() == 1 {
-        println!("{}", current_env.name());
+        println!("{}", CurrentEnv::name());
         return Ok(());
     }
+
+    color_eyre::install()?;
+    let current_env = CurrentEnv::new()?;
 
     let Args { env, shell, file } = Args::parse();
 

@@ -115,9 +115,25 @@ GLOBAL="some global variable"
 
 **`envswitch`**
 
-Finally, running just `envswitch` (and not one of our shell functions) will
-print the name of the environment we are currently in, such as `staging.def`.
-
 ## Integrations
 
+Running just `envswitch` (and not one of our shell functions) will
+print the name of the environment we are currently in, such as `staging.def`.
+
+This can be used to show the current environment in your prompt.
+
 ### Starship
+
+If you use [starship](https://starship.rs/), the `envswitch` environment can be
+easily added as a [custom command](https://starship.rs/config/#custom-commands).
+Here is an example that can be added to `starship.toml`:
+
+```toml
+[custom.envswitch]
+description = "Show which envswitch environment is currently active."
+command = "envswitch"
+style = "yellow"
+when = true
+format = "[($symbol $output )]($style)"
+symbol = ""
+```
