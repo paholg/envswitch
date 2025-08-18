@@ -7,7 +7,7 @@ test *args:
 release version:
     git diff --exit-code
     cargo set-version {{version}}
-    cargo test
+    nix flake check
     git add Cargo.toml Cargo.lock
     git commit -m "Version {{version}}"
     git tag v{{version}}
