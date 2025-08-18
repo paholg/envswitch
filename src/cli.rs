@@ -27,10 +27,10 @@ pub enum Commands {
     Get,
     /// Set the environment
     Set(Set),
-    /// Generate shell completions
-    Completions(Completions),
     /// Generate a command to integrate envswitch with your shell
     Setup(Setup),
+    #[clap(hide = true)]
+    Complete(Complete),
 }
 
 #[derive(Debug, Clone, Args)]
@@ -56,14 +56,20 @@ pub struct ConfigPath {
     pub file: Option<PathBuf>,
 }
 
-// TODO: Try to get nice completions working for `env`.
-// fn env_completer(current: &std::ffi::OsStr) -> Vec<CompletionCandidate> {
-//     todo!("current: {current:?}")
-// }
-
 #[derive(Debug, Clone, Args)]
-pub struct Completions {
-    pub shell: Shell,
+pub struct Complete {
+    #[command(flatten)]
+    pub config: ConfigPath,
+
+    // NOTE: We accept multiple positional arguments here just to make completion
+    // not error if you hit TAB too many times. We only use the first one.
+    #[arg(default_value = "")]
+    pub env: Vec<String>,
+
+    // We don't use this, but we need to respect all arguments that might be
+    // passed into `es`.
+    #[arg(short, long)]
+    list: bool,
 }
 
 #[derive(Debug, Clone, Args)]

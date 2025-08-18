@@ -48,7 +48,12 @@
         ];
 
         commonArgs = {
-          src = craneLib.cleanCargoSource ./.;
+          src = pkgs.lib.fileset.toSource {
+            root = ./.;
+            fileset = pkgs.lib.fileset.union (pkgs.lib.fileset.fromSource (craneLib.cleanCargoSource ./.)) (
+              pkgs.lib.fileset.fileFilter (file: true) ./src/shell
+            );
+          };
           strictDeps = true;
           nativeBuildInputs = shells;
         };

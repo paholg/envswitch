@@ -1,7 +1,6 @@
 use std::{env, fmt};
 
 use clap::ValueEnum;
-use indoc::formatdoc;
 
 // NOTE: If you add any shells here, make sure to add instructions to the
 // readme.
@@ -27,21 +26,15 @@ impl fmt::Display for Shell {
 impl Shell {
     pub fn setup(&self) -> String {
         let bin = env::args().next().unwrap();
-        match self {
-            Shell::Bash | Shell::Zsh => formatdoc! {"
-                es() {{
-                    local env
-                    env=$({bin} set -s{self} \"$@\") || return $?
-                    source <(echo \"$env\")
-                }}
-            "},
-            Shell::Fish => formatdoc! {"
-                function es
-                    {bin} set -s{self} $argv | source
-                    return $pipestatus[1]
-                end
-            "},
-        }
+        // NOTE: These scripts should use BIN as the binary name for envswitch,
+        // which we will sub-in at runtime as a very simple templating
+        // mechanism.
+        let script = match self {
+            Shell::Bash => include_str!("shell/bash_setup.sh"),
+            Shell::Fish => include_str!("shell/fish_setup.fish"),
+            Shell::Zsh => include_str!("shell/zsh_setup.zsh"),
+        };
+        script.replace("BIN", &bin)
     }
 
     pub fn set_var(&self, var: &str, value: &str) -> String {
@@ -55,14 +48,6 @@ impl Shell {
         match self {
             Shell::Bash | Shell::Zsh => format!("unset {var}"),
             Shell::Fish => format!("set -e {var}"),
-        }
-    }
-
-    pub fn as_clap_complete(&self) -> clap_complete::Shell {
-        match self {
-            Shell::Bash => clap_complete::Shell::Bash,
-            Shell::Fish => clap_complete::Shell::Fish,
-            Shell::Zsh => clap_complete::Shell::Zsh,
         }
     }
 
