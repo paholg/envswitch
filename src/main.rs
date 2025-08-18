@@ -1,10 +1,10 @@
-use std::io;
+use std::{borrow::Cow, io::Write};
 
-use clap::{CommandFactory, Parser};
+use clap::Parser;
 use color_eyre::config::HookBuilder;
 
 use crate::{
-    cli::{Cli, Commands, Completions, Set, Setup},
+    cli::{Cli, Commands, Complete, Set, Setup},
     config::{Key, deep_keys},
     config_walker::ConfigWalker,
     current_env::CurrentEnv,
@@ -68,15 +68,23 @@ fn set(args: Set) -> eyre::Result<()> {
     Ok(())
 }
 
-fn completions(args: Completions) -> eyre::Result<()> {
-    let mut cmd = Cli::command();
-    let name = cmd.get_name().to_string();
-    clap_complete::generate(
-        args.shell.as_clap_complete(),
-        &mut cmd,
-        name,
-        &mut io::stdout(),
-    );
+fn complete(args: Complete) -> eyre::Result<()> {
+    let config = cli::load_config_file(args.config.file.as_deref())?;
+
+    if args.env.len() > 1 {
+        // Already complete
+        return Ok(());
+    }
+
+    let env = args.env.first().map(Cow::Borrowed).unwrap_or_default();
+    let env = env.as_str();
+
+    // We could do this more efficiently by filtering as we construct deep_keys, but it shouldn't
+    // matter in practice.
+    for key in deep_keys(&config).filter(|key| key.starts_with(&env)) {
+        println!("{key}");
+    }
+
     Ok(())
 }
 
@@ -95,7 +103,7 @@ fn main() -> eyre::Result<()> {
     match cli.command {
         Commands::Get => get(),
         Commands::Set(args) => set(args),
-        Commands::Completions(args) => completions(args),
         Commands::Setup(args) => setup(args),
+        Commands::Complete(args) => complete(args),
     }
 }

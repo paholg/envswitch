@@ -10,22 +10,20 @@ keywords    = ["shell", "cli"]
 categories  = ["command-line-utilities", "config"]
 
 [dependencies]
-clap          = { version = "4.5.45", features = ["derive"] }
-clap_complete = { version = "4.5.57", features = ["unstable-dynamic"] }
-color-eyre    = { version = "0.6.5", default-features = false }
-eyre          = { version = "0.6.12", default-features = false }
-indexmap      = { version = "2.10.0", features = ["serde"] }
-itertools     = "0.14.0"
-serde         = { version = "1.0.219", features = ["derive"] }
-toml          = { version = "0.9.5", features = ["serde"] }
-indoc         = "2.0.6"
+clap       = { version = "4.5.45", features = ["derive"] }
+color-eyre = { version = "0.6.5", default-features = false }
+eyre       = { version = "0.6.12", default-features = false }
+indexmap   = { version = "2.10.0", features = ["serde"] }
+itertools  = "0.14.0"
+serde      = { version = "1.0.219", features = ["derive"] }
+toml       = { version = "0.9.5", features = ["serde"] }
 
 [dev-dependencies]
 escargot = "0.5.15"
+indoc    = "2.0.6"
 strum    = { version = "0.27.2", features = ["derive"] }
 tempfile = "3.20.0"
 
-# The profile that 'dist' will build with
 [profile.dist]
 inherits = "release"
 lto      = "thin"
