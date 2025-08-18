@@ -202,7 +202,7 @@ format = "[($symbol $output )]($style)"
 symbol = ""
 ```
 
-### How it Works
+## How it Works
 
 When you run an `envswitch set` command, it outputs commands to set or unset
 variables, which are then sourced by your shell in the function setup in
