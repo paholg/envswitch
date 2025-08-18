@@ -1,3 +1,5 @@
+![version](https://img.shields.io/github/v/release/paholg/envswitch)
+
 # envswitch
 
 A simple tool to manage multiple sets of environment variables.
