@@ -1,18 +1,26 @@
 {
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
-    rust-overlay.url = "github:oxalica/rust-overlay";
     crane.url = "github:ipetkov/crane";
+    flake-utils.url = "github:numtide/flake-utils";
+    nix-github-actions = {
+      url = "github:nix-community/nix-github-actions";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nixpkgs.url = "nixpkgs/nixos-unstable";
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
     {
-      nixpkgs,
-      flake-utils,
-      rust-overlay,
       crane,
-      ...
+      flake-utils,
+      nix-github-actions,
+      nixpkgs,
+      rust-overlay,
+      self,
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
@@ -33,34 +41,56 @@
 
         craneLib = (crane.mkLib pkgs).overrideToolchain (p: rust);
 
-        buildInputs = [ ];
-        nativeBuildInputs = [ ];
+        shells = with pkgs; [
+          bash
+          fish
+          zsh
+        ];
 
-        crate = craneLib.buildPackage {
-          inherit buildInputs nativeBuildInputs;
+        commonArgs = {
           src = craneLib.cleanCargoSource ./.;
           strictDeps = true;
-
-          meta.mainProgram = "envswitch";
+          nativeBuildInputs = shells;
         };
+
+        artifacts = commonArgs // {
+          cargoArtifacts = craneLib.buildDepsOnly commonArgs;
+        };
+
+        envswitch = craneLib.buildPackage (
+          artifacts
+          // {
+            meta.mainProgram = "envswitch";
+            doCheck = false;
+          }
+        );
+
       in
       {
         checks = {
-          inherit crate;
+          clippy = craneLib.cargoClippy artifacts;
+          fmt = craneLib.cargoFmt artifacts;
+          test = craneLib.cargoNextest artifacts;
         };
         packages = {
-          default = crate;
-          inherit crate;
+          inherit envswitch;
+          default = envswitch;
         };
         devShells.default = pkgs.mkShell {
-          inherit buildInputs nativeBuildInputs;
-          packages = [
-            pkgs.cargo-dist
-            pkgs.cargo-edit
-            pkgs.just
-            rust
-          ];
+          packages =
+            with pkgs;
+            [
+              cargo-dist
+              cargo-edit
+              cargo-nextest
+              just
+            ]
+            ++ [ rust ]
+            ++ shells;
         };
       }
-    );
+    )
+    // {
+      githubActions = nix-github-actions.lib.mkGithubMatrix { inherit (self) checks; };
+    };
 }

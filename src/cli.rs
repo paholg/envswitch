@@ -31,6 +31,8 @@ pub enum Commands {
     Set(Set),
     /// Generate shell completions
     Completions(Completions),
+    /// Generate a command to integrate envswitch with your shell
+    Setup(Setup),
 }
 
 #[derive(Debug, Clone, Args)]
@@ -65,6 +67,11 @@ pub struct ConfigPath {
 
 #[derive(Debug, Clone, Args)]
 pub struct Completions {
+    pub shell: Shell,
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct Setup {
     pub shell: Shell,
 }
 
