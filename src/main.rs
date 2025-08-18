@@ -34,7 +34,7 @@ fn set(args: Set) -> eyre::Result<()> {
     if list {
         eprintln!("Available environments:");
         for env in deep_keys(&config) {
-            eprintln!("\t{env}");
+            eprintln!("  {env}");
         }
         return Ok(());
     }
