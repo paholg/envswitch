@@ -125,14 +125,14 @@ impl<'de> Deserialize<'de> for Value {
 impl Value {
     pub fn as_string(&self) -> Option<&str> {
         match self {
-            Value::String(val) => Some(&val),
+            Value::String(val) => Some(val),
             _ => None,
         }
     }
 
     pub fn as_table(&self) -> Option<&Table> {
         match self {
-            Value::Table(val) => Some(&val),
+            Value::Table(val) => Some(val),
             _ => None,
         }
     }

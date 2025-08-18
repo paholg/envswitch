@@ -41,7 +41,7 @@ impl<'a> ConfigWalker<'a> {
             .iter()
             .flat_map(|(k, v)| v.as_string().map(|v| (k, v)));
         for (var, value) in variables {
-            self.vals.insert(&var, value);
+            self.vals.insert(var, value);
         }
 
         // Now we go to the next level:

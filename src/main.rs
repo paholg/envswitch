@@ -1,4 +1,4 @@
-use std::{borrow::Cow, io::Write};
+use std::borrow::Cow;
 
 use clap::Parser;
 use color_eyre::config::HookBuilder;
@@ -50,7 +50,7 @@ fn set(args: Set) -> eyre::Result<()> {
 
     let commands = current_env
         .clear_commands(&shell)
-        .chain([current_env.set(&shell, &env, walker.vals.keys().map(|k| *k))])
+        .chain([current_env.set(&shell, &env, walker.vals.keys().copied())])
         .chain(walker.set_commands(&shell));
 
     for command in commands {
@@ -81,7 +81,7 @@ fn complete(args: Complete) -> eyre::Result<()> {
 
     // We could do this more efficiently by filtering as we construct deep_keys, but it shouldn't
     // matter in practice.
-    for key in deep_keys(&config).filter(|key| key.starts_with(&env)) {
+    for key in deep_keys(&config).filter(|key| key.starts_with(env)) {
         println!("{key}");
     }
 

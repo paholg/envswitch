@@ -4,6 +4,9 @@ run *args:
 test *args:
     cargo nextest run {{args}}
 
+fix:
+    cargo clippy --fix --allow-staged
+
 release version:
     git diff --exit-code
     cargo set-version {{version}}

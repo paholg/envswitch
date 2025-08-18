@@ -73,7 +73,12 @@
       in
       {
         checks = {
-          clippy = craneLib.cargoClippy artifacts;
+          clippy = craneLib.cargoClippy (
+            artifacts
+            // {
+              cargoClippyExtraArgs = "-- --deny warnings";
+            }
+          );
           fmt = craneLib.cargoFmt artifacts;
           test = craneLib.cargoNextest artifacts;
         };
