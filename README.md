@@ -1,4 +1,4 @@
-![version](https://img.shields.io/github/v/release/paholg/envswitch)
+[![version](https://img.shields.io/github/v/release/paholg/envswitch)](https://github.com/paholg/envswitch/releases/)
 
 # envswitch
 
