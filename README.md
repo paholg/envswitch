@@ -34,6 +34,14 @@ URL=https://example.com
 KEY=super_secret
 ```
 
+Running `es -l` will show the options:
+```
+Available environments:
+  local
+  prod
+  prod.abc
+```
+
 See [Usage](#Usage) for more detailed examples.
 
 ## Compatibility
@@ -169,8 +177,7 @@ GLOBAL="some global variable"
 # set by envswitch to be unset.
 ```
 
-You can also run `envswitch list` to see available environments or
-`envswitch get` to see the currently set environment.
+You can also run `es -l` to see available environments.
 
 ## Integrations
 

@@ -25,20 +25,12 @@ pub struct Cli {
 pub enum Commands {
     /// Show the name of the current environment
     Get,
-    /// List available environments
-    List(List),
     /// Set the environment
     Set(Set),
     /// Generate shell completions
     Completions(Completions),
     /// Generate a command to integrate envswitch with your shell
     Setup(Setup),
-}
-
-#[derive(Debug, Clone, Args)]
-pub struct List {
-    #[command(flatten)]
-    pub config: ConfigPath,
 }
 
 #[derive(Debug, Clone, Args)]
@@ -52,6 +44,10 @@ pub struct Set {
 
     #[arg(short, long)]
     pub shell: Shell,
+
+    /// List available environments instead of setting any.
+    #[arg(short, long)]
+    pub list: bool,
 }
 
 #[derive(Debug, Clone, Args)]

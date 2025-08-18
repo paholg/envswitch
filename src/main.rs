@@ -4,7 +4,7 @@ use clap::{CommandFactory, Parser};
 use color_eyre::config::HookBuilder;
 
 use crate::{
-    cli::{Cli, Commands, Completions, List, Set, Setup},
+    cli::{Cli, Commands, Completions, Set, Setup},
     config::{Key, deep_keys},
     config_walker::ConfigWalker,
     current_env::CurrentEnv,
@@ -18,24 +18,26 @@ mod shell;
 
 #[cfg(test)]
 mod test;
-
-fn list(args: List) -> eyre::Result<()> {
-    let config = cli::load_config_file(args.config.file.as_deref())?;
-    eprintln!("Available environments:");
-    for env in deep_keys(&config) {
-        eprintln!("\t{env}");
-    }
-    Ok(())
-}
-
 fn get() -> eyre::Result<()> {
     println!("{}", CurrentEnv::name());
     Ok(())
 }
 
 fn set(args: Set) -> eyre::Result<()> {
-    let Set { config, env, shell } = args;
+    let Set {
+        config,
+        env,
+        shell,
+        list,
+    } = args;
     let config = cli::load_config_file(config.file.as_deref())?;
+    if list {
+        eprintln!("Available environments:");
+        for env in deep_keys(&config) {
+            eprintln!("\t{env}");
+        }
+        return Ok(());
+    }
 
     let current_env = CurrentEnv::new()?;
 
@@ -92,7 +94,6 @@ fn main() -> eyre::Result<()> {
 
     match cli.command {
         Commands::Get => get(),
-        Commands::List(args) => list(args),
         Commands::Set(args) => set(args),
         Commands::Completions(args) => completions(args),
         Commands::Setup(args) => setup(args),

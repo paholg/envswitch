@@ -245,4 +245,18 @@ mod readme {
             assert!(r.env_diff().is_empty());
         })
     }
+
+    #[test]
+    fn list() {
+        run(&CONFIG, "es -l", |r| {
+            assert_eq!(r.status(), 0);
+            assert!(r.env_diff().is_empty());
+            r.assert_stderr_includes("Available environments:");
+            r.assert_stderr_includes("staging\n");
+            r.assert_stderr_includes("staging.abc\n");
+            r.assert_stderr_includes("staging.def\n");
+            r.assert_stderr_includes("prod\n");
+            r.assert_stderr_includes("prod.abc\n");
+        })
+    }
 }
