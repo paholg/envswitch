@@ -1,7 +1,11 @@
+use std::{env, fmt};
+
 use clap::ValueEnum;
+use indoc::formatdoc;
 
 // NOTE: If you add any shells here, make sure to add instructions to the
 // readme.
+#[cfg_attr(test, derive(strum::EnumIter))]
 #[derive(Copy, Clone, Debug, ValueEnum)]
 pub enum Shell {
     Bash,
@@ -9,13 +13,34 @@ pub enum Shell {
     Zsh,
 }
 
+impl fmt::Display for Shell {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let name = match self {
+            Shell::Bash => "bash",
+            Shell::Fish => "fish",
+            Shell::Zsh => "zsh",
+        };
+        name.fmt(f)
+    }
+}
+
 impl Shell {
-    #[allow(dead_code)]
-    fn setup(&self) -> &'static str {
+    pub fn setup(&self) -> String {
+        let bin = env::args().next().unwrap();
         match self {
-            Shell::Bash => "es() { source <(envswitch set -sbash \"$@\"); }",
-            Shell::Fish => "function es; envswitch set -sfish $argv | source; end",
-            Shell::Zsh => "es() { source <(envswitch set -szsh \"$@\"); }",
+            Shell::Bash | Shell::Zsh => formatdoc! {"
+                es() {{
+                    local env
+                    env=$({bin} set -s{self} \"$@\") || return $?
+                    source <(echo \"$env\")
+                }}
+            "},
+            Shell::Fish => formatdoc! {"
+                function es
+                    {bin} set -s{self} $argv | source
+                    return $pipestatus[1]
+                end
+            "},
         }
     }
 
@@ -38,6 +63,37 @@ impl Shell {
             Shell::Bash => clap_complete::Shell::Bash,
             Shell::Fish => clap_complete::Shell::Fish,
             Shell::Zsh => clap_complete::Shell::Zsh,
+        }
+    }
+
+    #[cfg(test)]
+    pub fn script_prefix(&self, bin: &std::path::Path) -> String {
+        use indoc::formatdoc;
+
+        let bin = bin.display();
+        match self {
+            Shell::Bash | Shell::Zsh => formatdoc! {"
+                #!/usr/bin/env {self}
+                set -euo pipefail
+
+                source <({bin} setup bash)
+                "},
+            Shell::Fish => formatdoc! {"
+                #!/usr/bin/env fish
+
+                {bin} setup fish | source
+                "},
+        }
+    }
+
+    /// Fish doesn't have anything like `set -e`, and we need some way to exit
+    /// tests on failure.
+    #[cfg(test)]
+    pub fn try_cmd(&self, command: &str) -> String {
+        match self {
+            // We cover this in the prefix.
+            Shell::Bash | Shell::Zsh => command.to_string(),
+            Shell::Fish => format!("{command}; or return $status"),
         }
     }
 }

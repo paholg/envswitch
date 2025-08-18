@@ -1,8 +1,8 @@
 run *args: 
     cargo run -- {{args}}
 
-test:
-    cargo test
+test *args:
+    cargo nextest run {{args}}
 
 release version:
     git diff --exit-code

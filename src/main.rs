@@ -4,7 +4,7 @@ use clap::{CommandFactory, Parser};
 use color_eyre::config::HookBuilder;
 
 use crate::{
-    cli::{Cli, Commands, Completions, List, Set},
+    cli::{Cli, Commands, Completions, List, Set, Setup},
     config::{Key, deep_keys},
     config_walker::ConfigWalker,
     current_env::CurrentEnv,
@@ -15,6 +15,9 @@ mod config;
 mod config_walker;
 mod current_env;
 mod shell;
+
+#[cfg(test)]
+mod test;
 
 fn list(args: List) -> eyre::Result<()> {
     let config = cli::load_config_file(args.config.file.as_deref())?;
@@ -75,6 +78,11 @@ fn completions(args: Completions) -> eyre::Result<()> {
     Ok(())
 }
 
+fn setup(args: Setup) -> eyre::Result<()> {
+    println!("{}", args.shell.setup());
+    Ok(())
+}
+
 fn main() -> eyre::Result<()> {
     HookBuilder::default()
         .display_env_section(false)
@@ -87,5 +95,6 @@ fn main() -> eyre::Result<()> {
         Commands::List(args) => list(args),
         Commands::Set(args) => set(args),
         Commands::Completions(args) => completions(args),
+        Commands::Setup(args) => setup(args),
     }
 }

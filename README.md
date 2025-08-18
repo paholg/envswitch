@@ -60,23 +60,25 @@ various platforms is easy.
 It is strongly recommended that you run `envswitch` through a shell function, as
 otherwise it just outputs shell commands that need to be sourced.
 
-Please place the appropriate snippet in your shell config:
+Please place the appropriate snippet in your shell config. It will register the
+function `es`; if you'd prefer another name, you can run the `setup` command
+yourself and copy the output to your config with any desired changed.
 
 ### Bash
 
 ```bash
-es() { source <(envswitch set -sbash "$@"); }
+source <(envswitch setup bash)
 ```
 
 ### Fish
 ```fish
-function es; envswitch set -sfish $argv | source; end
+envswitch setup fish | source
 ```
 
 ### Zsh
 
 ```zsh
-es() { source <(envswitch set -szsh "$@"); }
+source <(envswitch setup zsh)
 ```
 
 ---
