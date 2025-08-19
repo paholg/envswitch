@@ -3,8 +3,7 @@ use std::{env, fmt};
 use clap::ValueEnum;
 
 // NOTE: If you add any shells here, make sure to add instructions to the
-// readme.
-#[cfg_attr(test, derive(strum::EnumIter))]
+// readme, and add it to the test cases in this file.
 #[derive(Copy, Clone, Debug, ValueEnum)]
 pub enum Shell {
     Bash,
@@ -50,35 +49,40 @@ impl Shell {
             Shell::Fish => format!("set -e {var}"),
         }
     }
+}
 
-    #[cfg(test)]
-    pub fn script_prefix(&self, bin: &std::path::Path) -> String {
-        use indoc::formatdoc;
+#[cfg(test)]
+pub mod test {
+    use crate::shell::Shell;
 
-        let bin = bin.display();
-        match self {
-            Shell::Bash | Shell::Zsh => formatdoc! {"
-                #!/usr/bin/env {self}
-                set -euo pipefail
+    use rstest_reuse::{self, template};
 
-                source <({bin} setup bash)
-                "},
-            Shell::Fish => formatdoc! {"
-                #!/usr/bin/env fish
+    #[template]
+    #[rstest]
+    #[case::bash(Shell::Bash)]
+    #[case::fish(Shell::Fish)]
+    #[case::zsh(Shell::Zsh)]
+    pub fn shell_cases(#[case] shell: Shell) {}
 
-                {bin} setup fish | source
-                "},
+    impl Shell {
+        pub fn script_prefix(&self, bin: &std::path::Path) -> String {
+            let bin = bin.display();
+            match self {
+                Shell::Bash | Shell::Zsh => {
+                    format!("set -euo pipefail; source <({bin} setup {self})")
+                }
+                Shell::Fish => format!("{bin} setup fish | source"),
+            }
         }
-    }
 
-    /// Fish doesn't have anything like `set -e`, and we need some way to exit
-    /// tests on failure.
-    #[cfg(test)]
-    pub fn try_cmd(&self, command: &str) -> String {
-        match self {
-            // We cover this in the prefix.
-            Shell::Bash | Shell::Zsh => command.to_string(),
-            Shell::Fish => format!("{command}; or return $status"),
+        /// Fish doesn't have anything like `set -e`, and we need some way to exit
+        /// tests on failure.
+        pub fn try_cmd(&self, command: &str) -> String {
+            match self {
+                // We cover this in the prefix.
+                Shell::Bash | Shell::Zsh => command.to_string(),
+                Shell::Fish => format!("{command}; or return $status"),
+            }
         }
     }
 }

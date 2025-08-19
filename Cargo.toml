@@ -19,10 +19,10 @@ serde      = { version = "1.0.219", features = ["derive"] }
 toml       = { version = "0.9.5", features = ["serde"] }
 
 [dev-dependencies]
-escargot = "0.5.15"
-indoc    = "2.0.6"
-strum    = { version = "0.27.2", features = ["derive"] }
-tempfile = "3.20.0"
+escargot     = "0.5.15"
+rstest       = "0.26.1"
+rstest_reuse = "0.7.0"
+tempfile     = "3.20.0"
 
 [profile.dist]
 inherits = "release"

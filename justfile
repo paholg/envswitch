@@ -2,7 +2,7 @@ run *args:
     cargo run -- {{args}}
 
 test *args:
-    cargo nextest run {{args}}
+    cargo nextest run --no-fail-fast {{args}}
 
 fix:
     cargo clippy --fix --allow-staged

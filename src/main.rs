@@ -18,6 +18,7 @@ mod shell;
 
 #[cfg(test)]
 mod test;
+
 fn get() -> eyre::Result<()> {
     println!("{}", CurrentEnv::name());
     Ok(())
