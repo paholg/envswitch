@@ -1,6 +1,7 @@
 use std::{fmt, ops::Deref};
 
 use indexmap::IndexMap;
+use phf::{Set, phf_set};
 use serde::{
     Deserialize,
     de::{self, Visitor},
@@ -29,17 +30,13 @@ impl AsRef<str> for Key {
     }
 }
 
-const FORBIDDEN_CHARS: &[char] = &['.', ',', ':', ' '];
+static FORBIDDEN_CHARS: Set<char> = phf_set! {'.', ',', ':', ' ', ';'};
 
 impl TryFrom<String> for Key {
     type Error = eyre::Error;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        match FORBIDDEN_CHARS
-            .iter()
-            .filter_map(|&ch| value.contains(ch).then_some(ch))
-            .next()
-        {
+        match value.chars().find(|ch| FORBIDDEN_CHARS.contains(ch)) {
             Some(invalid_char) => Err(eyre::eyre!("Config keys cannot contain '{invalid_char}'")),
             None => Ok(Key(value)),
         }

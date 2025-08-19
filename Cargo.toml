@@ -15,6 +15,7 @@ color-eyre = { version = "0.6.5", default-features = false }
 eyre       = { version = "0.6.12", default-features = false }
 indexmap   = { version = "2.10.0", features = ["serde"] }
 itertools  = "0.14.0"
+phf        = { version = "0.12.1", features = ["macros"] }
 serde      = { version = "1.0.219", features = ["derive"] }
 toml       = { version = "0.9.5", features = ["serde"] }
 
