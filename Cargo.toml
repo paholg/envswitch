@@ -6,7 +6,7 @@ license     = "MIT OR Apache-2.0"
 description = "A simple tool for managing sets of environment variables"
 repository  = "https://github.com/paholg/envswitch"
 homepage    = "https://github.com/paholg/envswitch"
-keywords    = ["shell", "cli"]
+keywords    = ["shell", "cli", "env"]
 categories  = ["command-line-utilities", "config"]
 
 [dependencies]

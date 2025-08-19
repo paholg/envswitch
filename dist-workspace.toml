@@ -19,3 +19,5 @@ install-updater = true
 tap = "paholg/homebrew-tap"
 # Publish jobs to run in CI
 publish-jobs = ["homebrew", "npm"]
+# The npm package should have this name
+npm-package = "@paholg/envswitch"
