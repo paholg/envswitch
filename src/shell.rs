@@ -64,6 +64,14 @@ pub mod test {
     #[case::zsh(Shell::Zsh)]
     pub fn shell_cases(#[case] shell: Shell) {}
 
+    #[template]
+    #[rstest]
+    #[case::bash(Shell::Bash)]
+    #[case::fish(Shell::Fish)]
+    // Zsh tests aren't working :(
+    // #[case::zsh(Shell::Zsh)]
+    pub fn shell_completion_cases(#[case] shell: Shell) {}
+
     impl Shell {
         pub fn script_prefix(&self, bin: &std::path::Path) -> String {
             let bin = bin.display();
@@ -82,6 +90,49 @@ pub mod test {
                 // We cover this in the prefix.
                 Shell::Bash | Shell::Zsh => command.to_string(),
                 Shell::Fish => format!("{command}; or return $status"),
+            }
+        }
+
+        /// This is an attempt to test completions. It's questionable how well
+        /// it works.
+        pub fn completion_cmd(&self, args: &[&str]) -> String {
+            match self {
+                Shell::Bash => {
+                    // Simulate bash completion environment and call _es_completion
+                    // Use explicit array assignment to avoid parsing issues
+                    let setup_cmd = if args.is_empty() {
+                        "COMP_WORDS[0]=es COMP_WORDS[1]=\"\" COMP_CWORD=1".to_string()
+                    } else {
+                        let mut setup = vec!["COMP_WORDS[0]=es".to_string()];
+                        for (i, arg) in args.iter().enumerate() {
+                            setup.push(format!("COMP_WORDS[{}]=\"{}\"", i + 1, arg));
+                        }
+                        setup.push(format!("COMP_CWORD={}", args.len()));
+                        setup.join(" ")
+                    };
+                    format!(
+                        "{} && _es_completion && printf '%s\\n' \"${{COMPREPLY[@]}}\"",
+                        setup_cmd
+                    )
+                }
+                Shell::Zsh => todo!(),
+                Shell::Fish => {
+                    let mock_commandline = if args.is_empty() {
+                        "function commandline; echo es; end".to_string()
+                    } else {
+                        let mut all_args = vec!["es"];
+                        all_args.extend(args.iter().copied());
+                        format!(
+                            "function commandline; printf '%s\\n' {}; end",
+                            all_args
+                                .iter()
+                                .map(|s| format!("'{}'", s))
+                                .collect::<Vec<_>>()
+                                .join(" ")
+                        )
+                    };
+                    format!("{} && __es_complete_positional", mock_commandline)
+                }
             }
         }
     }
