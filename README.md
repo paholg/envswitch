@@ -4,6 +4,12 @@
 
 A simple tool to manage multiple sets of environment variables.
 
+Do you ever need to make the same http request against different endpoints or
+with different keys? Do you ever want a simple way to toggle one or more
+environment variables, and have an easy way to track what you've set?
+
+Then envswitch might be for you!
+
 ## Quick example
 
 Given this config file:
