@@ -34,6 +34,9 @@ pub enum Commands {
 }
 
 #[derive(Debug, Clone, Args)]
+// Clap makes it too hard to have help printed to stderr, so we disable it
+// entirely here to prevent it from being `source`d by our shell function.
+#[command(disable_help_flag = true)]
 pub struct Set {
     #[command(flatten)]
     pub config: ConfigPath,

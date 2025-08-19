@@ -153,6 +153,25 @@ fn list(#[case] shell: Shell) {
     r.assert_stderr_includes("prod.abc\n");
 }
 
+#[apply(shell_cases)]
+fn bad_command(#[case] shell: Shell) {
+    let r = run_command(shell, &CONFIG, "es -g");
+    assert_ne!(r.status(), 0);
+
+    assert!(r.env_diff().is_empty());
+    r.assert_stderr_includes("error: unexpected argument '-g' found");
+}
+
+#[apply(shell_cases)]
+fn help(#[case] shell: Shell) {
+    let r = run_command(shell, &CONFIG, "es -h");
+    assert_ne!(r.status(), 0);
+
+    assert!(r.env_diff().is_empty());
+
+    r.assert_stderr_includes("error: unexpected argument '-h' found");
+}
+
 #[apply(shell_completion_cases)]
 fn completion_empty(#[case] shell: Shell) {
     let r = get_completions(shell, &CONFIG, &[]);

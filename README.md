@@ -61,10 +61,11 @@ various platforms is easy.
 
 | Platform | Instructions |
 |-------|-----------------|
-| MacOs | Run `brew install paholg/tap/envswitch` |
-| Nix   | Add this repo as a flake input |
+| MacOs | Run `brew install paholg/tap/envswitch`                       |
+| npm   | Run `npm install -g @paholg/envswitch`                        |
+| Nix   | Add this repo as a flake input                                |
 | Other | See [releases](https://github.com/paholg/envswitch/releases/) |
-
+              
 ## Configuration
 
 It is strongly recommended that you run `envswitch` through a shell function, as
