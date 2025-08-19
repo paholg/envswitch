@@ -14,6 +14,25 @@ pub struct ScriptResult {
     output: Output,
 }
 
+pub struct CompletionResult {
+    output: Output,
+}
+
+impl CompletionResult {
+    pub fn status(&self) -> i32 {
+        self.output.status.code().unwrap()
+    }
+
+    pub fn completions(&self) -> Vec<String> {
+        let stdout = std::str::from_utf8(&self.output.stdout).unwrap();
+        stdout
+            .lines()
+            .filter(|s| !s.is_empty())
+            .map(|s| s.to_string())
+            .collect()
+    }
+}
+
 fn parse_env(env: &str) -> IndexMap<&str, &str> {
     env.lines()
         .filter_map(|line| line.split_once('='))
@@ -49,7 +68,7 @@ impl ScriptResult {
     }
 }
 
-fn get_env(dir: &Path, shell: &Shell, name: &str, command: &str) -> eyre::Result<Output> {
+fn execute_script(dir: &Path, shell: Shell, name: &str, command: &str) -> eyre::Result<Output> {
     Command::new(shell.to_string())
         .output()
         .wrap_err_with(|| eyre!("Could not run {shell}"))?;
@@ -62,14 +81,8 @@ fn get_env(dir: &Path, shell: &Shell, name: &str, command: &str) -> eyre::Result
         .run()?;
     let bin = bin.path();
     let prefix = shell.script_prefix(bin);
-    let script_body = &[
-        prefix,
-        format!("cd {dir_display}"),
-        command.to_string(),
-        "env".to_string(),
-    ]
-    .join("\n");
-    println!("SCRIPT:\n{script_body}");
+    let script_body = &[prefix, format!("cd {dir_display}"), command.to_string()].join("\n");
+    println!("SCRIPT {name}:\n{script_body}");
 
     let script_path = dir.join(name);
     fs::write(&script_path, script_body.as_bytes())?;
@@ -77,31 +90,53 @@ fn get_env(dir: &Path, shell: &Shell, name: &str, command: &str) -> eyre::Result
     Ok(output)
 }
 
-fn run_command_inner(
-    config: &toml::Table,
+fn run_test<F: Fn(&Path, Shell) -> eyre::Result<T>, T>(
     shell: Shell,
-    dir: &Path,
-    command: &str,
-) -> eyre::Result<ScriptResult> {
-    let config_path = dir.join("envswitch.toml");
-    fs::write(&config_path, toml::to_string(&config)?.as_bytes())?;
+    config: &toml::Table,
+    test: F,
+) -> T {
+    fn run_inner<F: Fn(&Path, Shell) -> eyre::Result<T>, T>(
+        dir: &Path,
+        config: &toml::Table,
+        shell: Shell,
+        test: F,
+    ) -> eyre::Result<T> {
+        let config_path = dir.join("envswitch.toml");
+        fs::write(&config_path, toml::to_string(&config)?.as_bytes())?;
 
-    // We first run without the command to get a baseline for the ENV.
-    let base_env = get_env(dir, &shell, "base_env", "")?.stdout.try_into()?;
-    let output = get_env(dir, &shell, "test_script", &shell.try_cmd(command))?;
+        test(dir, shell)
+    }
 
-    Ok(ScriptResult { base_env, output })
+    let _ = color_eyre::install();
+    // We opt out of automatic cleanup, so we need to be sure to clean up after ourselves.
+    let dir = tempfile::tempdir().unwrap().keep();
+    let result = run_inner(&dir, config, shell, test);
+    std::fs::remove_dir_all(dir).unwrap();
+
+    result.unwrap()
 }
 
 pub fn run_command(shell: Shell, config: &toml::Table, command: &str) -> ScriptResult {
-    let _ = color_eyre::install();
+    run_test(shell, config, |dir, shell| {
+        // We first run without the command to get a baseline for the ENV.
+        let base_env = execute_script(dir, shell, "base_env", "env")?
+            .stdout
+            .try_into()?;
+        let output = execute_script(
+            dir,
+            shell,
+            "base_env",
+            &[&shell.try_cmd(command), "env"].join("\n"),
+        )?;
 
-    let dir = tempfile::tempdir().unwrap().keep();
-    let result = run_command_inner(config, shell, &dir, command);
-    // We opted out of automatic cleanup, so we need to be sure to clean up after ourselves.
-    std::fs::remove_dir_all(dir).unwrap();
+        Ok(ScriptResult { base_env, output })
+    })
+}
 
-    let result = result.unwrap();
-    println!("{:?}", result.output);
-    result
+pub fn get_completions(shell: Shell, config: &toml::Table, args: &[&str]) -> CompletionResult {
+    run_test(shell, config, |dir, shell| {
+        let output = execute_script(dir, shell, "completion_script", &shell.completion_cmd(args))?;
+
+        Ok(CompletionResult { output })
+    })
 }

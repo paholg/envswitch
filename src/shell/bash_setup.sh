@@ -32,3 +32,5 @@ _es_completion() {
     mapfile -t completions < <(BIN complete "${args[@]}" 2>/dev/null)
     mapfile -t COMPREPLY < <(compgen -W "${completions[*]}" -- "${cur}")
 }
+
+complete -F _es_completion es
