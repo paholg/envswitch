@@ -20,4 +20,4 @@ tap = "paholg/homebrew-tap"
 # Publish jobs to run in CI
 publish-jobs = ["homebrew"]
 # A namespace to use when publishing this package to the npm registry
-npm-scope = "@paholg"
+npm-scope = "@envswitch"
