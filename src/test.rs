@@ -6,7 +6,8 @@ use rstest_reuse::apply;
 
 use crate::shell::Shell;
 use crate::shell::test::{shell_cases, shell_completion_cases};
-use crate::test::helpers::{get_completions, run_command};
+use crate::test::helpers::assert_completions;
+use crate::test::helpers::run_command;
 
 mod helpers;
 
@@ -174,69 +175,57 @@ fn help(#[case] shell: Shell) {
 
 #[apply(shell_completion_cases)]
 fn completion_empty(#[case] shell: Shell) {
-    let r = get_completions(shell, &CONFIG, &[]);
-    assert_eq!(r.status(), 0);
-
-    let completions = r.completions();
-    assert_eq!(
-        completions,
-        ["prod", "prod.abc", "staging", "staging.abc", "staging.def"]
+    assert_completions(
+        shell,
+        &CONFIG,
+        "es ",
+        &["prod", "prod.abc", "staging", "staging.abc", "staging.def"],
     );
 }
 
 #[apply(shell_completion_cases)]
 fn completion_partial(#[case] shell: Shell) {
-    let r = get_completions(shell, &CONFIG, &["stag"]);
-    assert_eq!(r.status(), 0);
-
-    let completions = r.completions();
-    assert_eq!(completions, ["staging", "staging.abc", "staging.def"]);
+    assert_completions(
+        shell,
+        &CONFIG,
+        "es stag",
+        &["staging", "staging.abc", "staging.def"],
+    );
 }
 
 #[apply(shell_completion_cases)]
 fn completion_with_file(#[case] shell: Shell) {
-    let r = get_completions(shell, &CONFIG, &["-f", "envswitch.toml", "prod"]);
-    assert_eq!(r.status(), 0);
-
-    let completions = r.completions();
-    assert_eq!(completions, ["prod", "prod.abc"]);
+    assert_completions(
+        shell,
+        &CONFIG,
+        "es -f envswitch.toml prod",
+        &["prod", "prod.abc"],
+    );
 }
 
 #[apply(shell_completion_cases)]
 fn completion_with_file_and_list(#[case] shell: Shell) {
-    let r = get_completions(shell, &CONFIG, &["-f", "envswitch.toml", "-l", "prod"]);
-    assert_eq!(r.status(), 0);
-
-    let completions = r.completions();
-    assert_eq!(completions, ["prod", "prod.abc"]);
+    assert_completions(
+        shell,
+        &CONFIG,
+        "es -f envswitch.toml -l prod",
+        &["prod", "prod.abc"],
+    );
 }
 
+// FIXME: We need to support negative expectations
 #[apply(shell_completion_cases)]
 fn completion_full(#[case] shell: Shell) {
-    let r = get_completions(shell, &CONFIG, &["staging.abc", ""]);
-    assert_eq!(r.status(), 0);
-
-    let completions = r.completions();
-    let rhs: &[&str] = &[];
-    assert_eq!(completions, rhs);
+    assert_completions(shell, &CONFIG, "es staging.abc ", &[]);
 }
 
-// NOTE: These tests fail for fish as our test setup only tests the positional
-// complete function.
+// FIXME
 // #[apply(shell_completion_cases)]
 // fn completion_flag(#[case] shell: Shell) {
-//     let r = get_completions(shell, &CONFIG, &["-"]);
-//     assert_eq!(r.status(), 0);
-
-//     let completions = r.completions();
-//     assert_eq!(completions, ["-f", "--file", "-l", "--list"]);
+//     assert_completions(shell, &CONFIG, "es -", &["-f", "--file", "-l", "--list"]);
 // }
 
-// #[apply(shell_completion_cases)]
-// fn completion_file(#[case] shell: Shell) {
-//     let r = get_completions(shell, &CONFIG, &["-f", ""]);
-//     assert_eq!(r.status(), 0);
-
-//     let completions = r.completions();
-//     assert_eq!(completions, ["completion_script", "envswitch.toml"]);
-// }
+#[apply(shell_completion_cases)]
+fn completion_file(#[case] shell: Shell) {
+    assert_completions(shell, &CONFIG, "es -f ", &["envswitch.toml"]);
+}

@@ -6,31 +6,13 @@ use std::{
 
 use eyre::{Context, eyre};
 use indexmap::IndexMap;
+use rexpect::{reader::Options, spawn_with_options};
 
 use crate::shell::Shell;
 
 pub struct ScriptResult {
     base_env: String,
     output: Output,
-}
-
-pub struct CompletionResult {
-    output: Output,
-}
-
-impl CompletionResult {
-    pub fn status(&self) -> i32 {
-        self.output.status.code().unwrap()
-    }
-
-    pub fn completions(&self) -> Vec<String> {
-        let stdout = std::str::from_utf8(&self.output.stdout).unwrap();
-        stdout
-            .lines()
-            .filter(|s| !s.is_empty())
-            .map(|s| s.to_string())
-            .collect()
-    }
 }
 
 fn parse_env(env: &str) -> IndexMap<&str, &str> {
@@ -133,10 +115,42 @@ pub fn run_command(shell: Shell, config: &toml::Table, command: &str) -> ScriptR
     })
 }
 
-pub fn get_completions(shell: Shell, config: &toml::Table, args: &[&str]) -> CompletionResult {
-    run_test(shell, config, |dir, shell| {
-        let output = execute_script(dir, shell, "completion_script", &shell.completion_cmd(args))?;
+fn execute_completion(
+    dir: &Path,
+    shell: Shell,
+    command: &str,
+    expected: &[&str],
+) -> eyre::Result<()> {
+    let mut p = spawn_with_options(
+        Command::new(shell.to_string()),
+        Options {
+            timeout_ms: Some(1000),
+            strip_ansi_escape_codes: true,
+        },
+    )?;
 
-        Ok(CompletionResult { output })
+    let dir_display = dir.display();
+    let bin = escargot::CargoBuild::new()
+        .bin("envswitch")
+        .current_release()
+        .current_target()
+        .run()?;
+    let bin = bin.path();
+    let prefix = shell.script_prefix(bin);
+
+    p.send_line(&prefix)?;
+    p.send_line(&format!("cd {dir_display}"))?;
+    p.send(command)?;
+    // We send two tabs because, on the first one, zsh just completes the
+    // current word.
+    p.send("\t\t")?;
+    p.flush()?;
+    p.exp_regex(&expected.join("[ ]+"))?;
+    Ok(())
+}
+
+pub fn assert_completions(shell: Shell, config: &toml::Table, command: &str, expected: &[&str]) {
+    run_test(shell, config, |dir, shell| {
+        execute_completion(dir, shell, command, expected)
     })
 }
