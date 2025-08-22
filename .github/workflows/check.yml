@@ -35,6 +35,11 @@ jobs:
       - uses: nixbuild/nix-quick-install-action@v32
       - uses: nix-community/cache-nix-action@v6
         with:
-          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
+          primary-key: nix-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          paths: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
       - run: nix build
       - run: nix flake check --print-build-logs
