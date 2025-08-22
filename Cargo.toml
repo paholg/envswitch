@@ -21,10 +21,10 @@ toml       = { version = "0.9.5", features = ["serde"] }
 
 [dev-dependencies]
 escargot     = "0.5.15"
-rexpect = "0.6.2"
+rexpect      = "0.6.2"
 rstest       = "0.26.1"
 rstest_reuse = "0.7.0"
-tempfile     = "3.20.0"
+tempfile     = "3.21.0"
 
 [profile.dist]
 inherits = "release"
