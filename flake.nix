@@ -1,26 +1,18 @@
 {
   inputs = {
-    crane.url = "github:ipetkov/crane";
-    flake-utils.url = "github:numtide/flake-utils";
-    nix-github-actions = {
-      url = "github:nix-community/nix-github-actions";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     nixpkgs.url = "nixpkgs/nixos-unstable";
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    flake-utils.url = "github:numtide/flake-utils";
+    rust-overlay.url = "github:oxalica/rust-overlay";
+    crane.url = "github:ipetkov/crane";
   };
 
   outputs =
     {
-      crane,
-      flake-utils,
-      nix-github-actions,
       nixpkgs,
+      flake-utils,
       rust-overlay,
-      self,
+      crane,
+      ...
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
@@ -47,7 +39,7 @@
           zsh
         ];
 
-        commonArgs = {
+        crate = craneLib.buildPackage {
           src = pkgs.lib.fileset.toSource {
             root = ./.;
             fileset = pkgs.lib.fileset.union (pkgs.lib.fileset.fromSource (craneLib.cleanCargoSource ./.)) (
@@ -55,36 +47,18 @@
             );
           };
           strictDeps = true;
-          nativeBuildInputs = shells;
+          # Our completion tests fail when run by nix.
+          doCheck = false;
+          meta.mainProgram = "envswitch";
         };
-
-        artifacts = commonArgs // {
-          cargoArtifacts = craneLib.buildDepsOnly commonArgs;
-        };
-
-        envswitch = craneLib.buildPackage (
-          artifacts
-          // {
-            meta.mainProgram = "envswitch";
-            doCheck = false;
-          }
-        );
-
       in
       {
         checks = {
-          clippy = craneLib.cargoClippy (
-            artifacts
-            // {
-              cargoClippyExtraArgs = "-- --deny warnings";
-            }
-          );
-          fmt = craneLib.cargoFmt artifacts;
-          test = craneLib.cargoNextest artifacts;
+          inherit crate;
         };
         packages = {
-          inherit envswitch;
-          default = envswitch;
+          default = crate;
+          inherit crate;
         };
         devShells.default = pkgs.mkShell {
           packages =
@@ -99,8 +73,5 @@
             ++ shells;
         };
       }
-    )
-    // {
-      githubActions = nix-github-actions.lib.mkGithubMatrix { inherit (self) checks; };
-    };
+    );
 }

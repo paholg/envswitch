@@ -37,7 +37,7 @@ static CONFIG: LazyLock<toml::Table> = LazyLock::new(|| {
 #[apply(shell_cases)]
 fn staging(#[case] shell: Shell) {
     let r = run_command(shell, &CONFIG, "es staging");
-    assert_eq!(r.status(), 0);
+    r.assert_success();
 
     assert_eq!(
         r.env_diff(),
@@ -52,7 +52,7 @@ fn staging(#[case] shell: Shell) {
 #[apply(shell_cases)]
 fn staging_abc(#[case] shell: Shell) {
     let r = run_command(shell, &CONFIG, "es staging.abc");
-    assert_eq!(r.status(), 0);
+    r.assert_success();
 
     assert_eq!(
         r.env_diff(),
@@ -68,7 +68,7 @@ fn staging_abc(#[case] shell: Shell) {
 #[apply(shell_cases)]
 fn staging_def(#[case] shell: Shell) {
     let r = run_command(shell, &CONFIG, "es staging.def");
-    assert_eq!(r.status(), 0);
+    r.assert_success();
 
     assert_eq!(
         r.env_diff(),
@@ -84,7 +84,7 @@ fn staging_def(#[case] shell: Shell) {
 #[apply(shell_cases)]
 fn prod_abc(#[case] shell: Shell) {
     let r = run_command(shell, &CONFIG, "es prod.abc");
-    assert_eq!(r.status(), 0);
+    r.assert_success();
 
     assert_eq!(
         r.env_diff(),
@@ -100,7 +100,7 @@ fn prod_abc(#[case] shell: Shell) {
 #[apply(shell_cases)]
 fn prod(#[case] shell: Shell) {
     let r = run_command(shell, &CONFIG, &["es prod.abc", "es prod"].join("\n"));
-    assert_eq!(r.status(), 0);
+    r.assert_success();
 
     r.assert_stderr_includes("Environment set: prod.abc ");
     r.assert_stderr_includes("Environment set: prod ");
@@ -118,7 +118,7 @@ fn prod(#[case] shell: Shell) {
 #[apply(shell_cases)]
 fn base(#[case] shell: Shell) {
     let r = run_command(shell, &CONFIG, &["es prod", "es"].join("\n"));
-    assert_eq!(r.status(), 0);
+    r.assert_success();
 
     r.assert_stderr_includes("Environment set: prod ");
 
@@ -142,7 +142,7 @@ fn missing_file(#[case] shell: Shell) {
 #[apply(shell_cases)]
 fn list(#[case] shell: Shell) {
     let r = run_command(shell, &CONFIG, "es -l");
-    assert_eq!(r.status(), 0);
+    r.assert_success();
 
     assert!(r.env_diff().is_empty());
 
