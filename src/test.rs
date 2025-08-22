@@ -5,7 +5,7 @@ use rstest::rstest;
 use rstest_reuse::apply;
 
 use crate::shell::Shell;
-use crate::shell::test::{shell_cases, shell_completion_cases};
+use crate::shell::test::shell_cases;
 use crate::test::helpers::assert_completions;
 use crate::test::helpers::run_command;
 
@@ -37,7 +37,7 @@ static CONFIG: LazyLock<toml::Table> = LazyLock::new(|| {
 #[apply(shell_cases)]
 fn staging(#[case] shell: Shell) {
     let r = run_command(shell, &CONFIG, "es staging");
-    assert_eq!(r.status(), 0);
+    r.assert_success();
 
     assert_eq!(
         r.env_diff(),
@@ -52,7 +52,7 @@ fn staging(#[case] shell: Shell) {
 #[apply(shell_cases)]
 fn staging_abc(#[case] shell: Shell) {
     let r = run_command(shell, &CONFIG, "es staging.abc");
-    assert_eq!(r.status(), 0);
+    r.assert_success();
 
     assert_eq!(
         r.env_diff(),
@@ -68,7 +68,7 @@ fn staging_abc(#[case] shell: Shell) {
 #[apply(shell_cases)]
 fn staging_def(#[case] shell: Shell) {
     let r = run_command(shell, &CONFIG, "es staging.def");
-    assert_eq!(r.status(), 0);
+    r.assert_success();
 
     assert_eq!(
         r.env_diff(),
@@ -84,7 +84,7 @@ fn staging_def(#[case] shell: Shell) {
 #[apply(shell_cases)]
 fn prod_abc(#[case] shell: Shell) {
     let r = run_command(shell, &CONFIG, "es prod.abc");
-    assert_eq!(r.status(), 0);
+    r.assert_success();
 
     assert_eq!(
         r.env_diff(),
@@ -100,7 +100,7 @@ fn prod_abc(#[case] shell: Shell) {
 #[apply(shell_cases)]
 fn prod(#[case] shell: Shell) {
     let r = run_command(shell, &CONFIG, &["es prod.abc", "es prod"].join("\n"));
-    assert_eq!(r.status(), 0);
+    r.assert_success();
 
     r.assert_stderr_includes("Environment set: prod.abc ");
     r.assert_stderr_includes("Environment set: prod ");
@@ -118,7 +118,7 @@ fn prod(#[case] shell: Shell) {
 #[apply(shell_cases)]
 fn base(#[case] shell: Shell) {
     let r = run_command(shell, &CONFIG, &["es prod", "es"].join("\n"));
-    assert_eq!(r.status(), 0);
+    r.assert_success();
 
     r.assert_stderr_includes("Environment set: prod ");
 
@@ -142,7 +142,7 @@ fn missing_file(#[case] shell: Shell) {
 #[apply(shell_cases)]
 fn list(#[case] shell: Shell) {
     let r = run_command(shell, &CONFIG, "es -l");
-    assert_eq!(r.status(), 0);
+    r.assert_success();
 
     assert!(r.env_diff().is_empty());
 
@@ -173,7 +173,7 @@ fn help(#[case] shell: Shell) {
     r.assert_stderr_includes("error: unexpected argument '-h' found");
 }
 
-#[apply(shell_completion_cases)]
+#[apply(shell_cases)]
 fn completion_empty(#[case] shell: Shell) {
     assert_completions(
         shell,
@@ -183,7 +183,7 @@ fn completion_empty(#[case] shell: Shell) {
     );
 }
 
-#[apply(shell_completion_cases)]
+#[apply(shell_cases)]
 fn completion_partial(#[case] shell: Shell) {
     assert_completions(
         shell,
@@ -193,7 +193,7 @@ fn completion_partial(#[case] shell: Shell) {
     );
 }
 
-#[apply(shell_completion_cases)]
+#[apply(shell_cases)]
 fn completion_with_file(#[case] shell: Shell) {
     assert_completions(
         shell,
@@ -203,7 +203,7 @@ fn completion_with_file(#[case] shell: Shell) {
     );
 }
 
-#[apply(shell_completion_cases)]
+#[apply(shell_cases)]
 fn completion_with_file_and_list(#[case] shell: Shell) {
     assert_completions(
         shell,
@@ -214,18 +214,18 @@ fn completion_with_file_and_list(#[case] shell: Shell) {
 }
 
 // FIXME: We need to support negative expectations
-#[apply(shell_completion_cases)]
+#[apply(shell_cases)]
 fn completion_full(#[case] shell: Shell) {
     assert_completions(shell, &CONFIG, "es staging.abc ", &[]);
 }
 
 // FIXME
-// #[apply(shell_completion_cases)]
+// #[apply(shell_cases)]
 // fn completion_flag(#[case] shell: Shell) {
 //     assert_completions(shell, &CONFIG, "es -", &["-f", "--file", "-l", "--list"]);
 // }
 
-#[apply(shell_completion_cases)]
+#[apply(shell_cases)]
 fn completion_file(#[case] shell: Shell) {
     assert_completions(shell, &CONFIG, "es -f ", &["envswitch.toml"]);
 }

@@ -64,13 +64,6 @@ pub mod test {
     #[case::zsh(Shell::Zsh)]
     pub fn shell_cases(#[case] shell: Shell) {}
 
-    #[template]
-    #[rstest]
-    #[case::bash(Shell::Bash)]
-    #[case::fish(Shell::Fish)]
-    #[case::zsh(Shell::Zsh)]
-    pub fn shell_completion_cases(#[case] shell: Shell) {}
-
     impl Shell {
         pub fn script_prefix(&self, bin: &std::path::Path) -> String {
             let bin = bin.display();

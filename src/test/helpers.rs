@@ -40,6 +40,16 @@ impl ScriptResult {
         env
     }
 
+    pub fn assert_success(&self) {
+        assert_eq!(
+            self.status(),
+            0,
+            "Stdout:\n{}\nStderr: {}\n",
+            str::from_utf8(&self.output.stdout).unwrap(),
+            str::from_utf8(&self.output.stderr).unwrap(),
+        );
+    }
+
     pub fn assert_stderr_includes(&self, s: &str) {
         let stderr = str::from_utf8(&self.output.stderr).unwrap();
 
