@@ -96,6 +96,10 @@ fn run_test<F: Fn(&Path, Shell) -> eyre::Result<T>, T>(
         let config_path = dir.join("envswitch.toml");
         fs::write(&config_path, toml::to_string(&config)?.as_bytes())?;
 
+        // Create a dummy file for bash to ensure file completion shows.
+        let dummy_path = dir.join("dummy.file");
+        fs::write(&dummy_path, b"")?;
+
         test(dir, shell)
     }
 
@@ -132,10 +136,11 @@ fn execute_completion(
     expected: &[&str],
 ) -> eyre::Result<()> {
     let mut p = spawn_with_options(
-        Command::new(shell.to_string()),
+        shell.shell_command(),
         Options {
             timeout_ms: Some(1000),
-            strip_ansi_escape_codes: true,
+            // There is a bug where leading characters get stripped in fish.
+            strip_ansi_escape_codes: !matches!(shell, Shell::Fish),
         },
     )?;
 
@@ -149,11 +154,10 @@ fn execute_completion(
     let prefix = shell.script_prefix(bin);
 
     p.send_line(&prefix)?;
+
     p.send_line(&format!("cd {dir_display}"))?;
     p.send(command)?;
-    // We send two tabs because, on the first one, zsh just completes the
-    // current word.
-    p.send("\t\t")?;
+    p.send("\t")?;
     p.flush()?;
     p.exp_regex(&expected.join("[ ]+"))?;
     Ok(())

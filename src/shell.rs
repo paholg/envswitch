@@ -53,6 +53,8 @@ impl Shell {
 
 #[cfg(test)]
 pub mod test {
+    use std::process::Command;
+
     use crate::shell::Shell;
 
     use rstest_reuse::{self, template};
@@ -65,11 +67,37 @@ pub mod test {
     pub fn shell_cases(#[case] shell: Shell) {}
 
     impl Shell {
+        pub fn shell_command(&self) -> Command {
+            let mut cmd = Command::new(self.to_string());
+            match self {
+                Shell::Bash => {
+                    cmd.arg("--norc");
+                }
+                Shell::Fish => {
+                    cmd.arg("--no-config").arg("--features=no-query-term");
+                }
+                Shell::Zsh => {
+                    cmd.arg("--no-rcs");
+                }
+            };
+            cmd
+        }
         pub fn script_prefix(&self, bin: &std::path::Path) -> String {
             let bin = bin.display();
             match self {
-                Shell::Bash | Shell::Zsh => {
-                    format!("set -euo pipefail; source <({bin} setup {self})")
+                Shell::Bash => {
+                    format!(
+                        "set -euo pipefail; \
+                         bind 'set show-all-if-ambiguous on'; \
+                         source <({bin} setup {self})"
+                    )
+                }
+                Shell::Zsh => {
+                    format!(
+                        "set -euo pipefail; \
+                         unsetopt LIST_AMBIGUOUS; \
+                         source <({bin} setup {self})"
+                    )
                 }
                 Shell::Fish => format!("{bin} setup fish | source"),
             }

@@ -65,18 +65,6 @@
           }
         );
 
-        # These tests fail in `nix flake check`. I am not sure why. :(
-        skippedTests =
-          pkgs.lib.pipe
-            [
-              "test::completion_file::case_1_bash"
-              "test::completion_partial::case_1_bash"
-            ]
-            [
-              (builtins.map (test: "--skip ${test}"))
-              (builtins.concatStringsSep " ")
-            ];
-
       in
       {
         checks = {
@@ -87,12 +75,7 @@
             }
           );
           fmt = craneLib.cargoFmt artifacts;
-          test = craneLib.cargoNextest (
-            artifacts
-            // {
-              cargoNextestExtraArgs = "-- ${skippedTests}";
-            }
-          );
+          test = craneLib.cargoNextest artifacts;
         };
         packages = {
           inherit envswitch;

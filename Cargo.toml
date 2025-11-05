@@ -10,21 +10,21 @@ keywords    = ["shell", "cli", "env"]
 categories  = ["command-line-utilities", "config"]
 
 [dependencies]
-clap       = { version = "4.5.45", features = ["derive"] }
+clap       = { version = "4.5.51", features = ["derive"] }
 color-eyre = { version = "0.6.5", default-features = false }
 eyre       = { version = "0.6.12", default-features = false }
-indexmap   = { version = "2.11.0", features = ["serde"] }
+indexmap   = { version = "2.12.0", features = ["serde"] }
 itertools  = "0.14.0"
-phf        = { version = "0.12.1", features = ["macros"] }
-serde      = { version = "1.0.219", features = ["derive"] }
-toml       = { version = "0.9.5", features = ["serde"] }
+phf        = { version = "0.13.1", features = ["macros"] }
+serde      = { version = "1.0.228", features = ["derive"] }
+toml       = { version = "0.9.8", features = ["serde"] }
 
 [dev-dependencies]
 escargot     = "0.5.15"
 rexpect      = "0.6.2"
 rstest       = "0.26.1"
 rstest_reuse = "0.7.0"
-tempfile     = "3.21.0"
+tempfile     = "3.23.0"
 
 [profile.dist]
 inherits = "release"
