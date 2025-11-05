@@ -156,6 +156,10 @@ fn execute_completion(
     p.send_line(&prefix)?;
 
     p.send_line(&format!("cd {dir_display}"))?;
+    // Send this in two parts, so we're sure to consume the output.
+    p.send_line("echo -n MARK; echo ER")?;
+    p.flush()?;
+    p.exp_string("MARKER")?;
     p.send(command)?;
     p.send("\t")?;
     p.flush()?;

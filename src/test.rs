@@ -219,11 +219,11 @@ fn completion_full(#[case] shell: Shell) {
     assert_completions(shell, &CONFIG, "es staging.abc ", &[]);
 }
 
-// FIXME
-// #[apply(shell_cases)]
-// fn completion_flag(#[case] shell: Shell) {
-//     assert_completions(shell, &CONFIG, "es -", &["-f", "--file", "-l", "--list"]);
-// }
+#[apply(shell_cases)]
+fn completion_flag(#[case] shell: Shell) {
+    assert_completions(shell, &CONFIG, "es -", &["--file"]);
+    assert_completions(shell, &CONFIG, "es -", &["--list"]);
+}
 
 #[apply(shell_cases)]
 fn completion_file(#[case] shell: Shell) {
