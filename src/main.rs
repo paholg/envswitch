@@ -20,7 +20,13 @@ mod shell;
 mod test;
 
 fn get() -> eyre::Result<()> {
-    println!("{}", CurrentEnv::name());
+    let name = CurrentEnv::name();
+
+    if name.is_empty() {
+        std::process::exit(1);
+    } else {
+        println!("{}", CurrentEnv::name());
+    }
     Ok(())
 }
 

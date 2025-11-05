@@ -202,8 +202,8 @@ Here is an example that can be added to `starship.toml`:
 [custom.envswitch]
 description = "Show which envswitch environment is currently active."
 command = "envswitch get"
+when = "envwitch get"
 style = "yellow"
-when = true
 format = "[($symbol $output )]($style)"
 symbol = ""
 ```
