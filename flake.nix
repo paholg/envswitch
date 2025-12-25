@@ -27,14 +27,15 @@
           inherit system overlays;
         };
 
-        rust = (pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml).override {
+        rustMinimal = pkgs.rust-bin.stable.latest.minimal;
+        rustDev = pkgs.rust-bin.stable.latest.default.override {
           extensions = [
             "rust-analyzer"
             "rust-src"
           ];
         };
 
-        craneLib = (crane.mkLib pkgs).overrideToolchain (p: rust);
+        craneLib = (crane.mkLib pkgs).overrideToolchain (p: rustMinimal);
 
         shells = with pkgs; [
           bash
@@ -90,7 +91,7 @@
               cargo-nextest
               just
             ]
-            ++ [ rust ]
+            ++ [ rustDev ]
             ++ shells;
         };
       }
